@@ -26,3 +26,17 @@ card's data. Each tab has an individual dismiss (x) button.
 - Cards persist across conversation turns until dismissed by the user
 - Dismissing the active card auto-selects the next most recent card; if no cards
   remain, the panel returns to its empty placeholder state
+
+---
+
+## REQ-002: Chat Message Formatting
+
+Assistant responses must be rendered as formatted, human-readable text rather
+than a raw string dump.
+
+- Assistant responses are rendered as markdown (bold, italics, headings, bullet
+  points, numbered lists, code blocks)
+- Card names appear in bold
+- User messages are displayed as plain text (right-aligned)
+- Error messages are visually distinct
+- The LLM is instructed via system prompt to use markdown formatting in all responses

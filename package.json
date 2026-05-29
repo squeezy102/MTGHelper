@@ -17,6 +17,7 @@
     "webpack-cli": "^7.0.3"
   },
   "dependencies": {
+    "marked": "^18.0.4",
     "ollama": "^0.6.3"
   }
 }

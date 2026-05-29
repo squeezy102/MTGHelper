@@ -1,3 +1,7 @@
+import { marked } from 'marked';
+
+marked.setOptions({ breaks: true });
+
 class ChatViewController {
   constructor(cardPanelController) {
     this.cardPanelController = cardPanelController;
@@ -37,10 +41,16 @@ class ChatViewController {
   }
 
   appendMessage(role, content) {
-    const messageDiv = document.createElement('div');
-    messageDiv.classList.add('chat-message', `chat-message--${role}`);
-    messageDiv.textContent = content;
-    this.chatHistory.appendChild(messageDiv);
+    const div = document.createElement('div');
+    div.classList.add('chat-message', `chat-message--${role}`);
+
+    if (role === 'assistant') {
+      div.innerHTML = marked.parse(content);
+    } else {
+      div.textContent = content;
+    }
+
+    this.chatHistory.appendChild(div);
     this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
   }
 

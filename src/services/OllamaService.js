@@ -7,9 +7,8 @@ class OllamaService {
   }
 
   async sendMessage(message, conversationHistory = [], context = null) {
-    const systemContent = context
-      ? `You are an expert Magic: The Gathering assistant. You help players look up cards, build decks, understand rules, and discuss strategy and meta. Be concise and accurate.\n\n${context}`
-      : `You are an expert Magic: The Gathering assistant. You help players look up cards, build decks, understand rules, and discuss strategy and meta. Be concise and accurate.`;
+    const base = `You are an expert Magic: The Gathering assistant. You help players look up cards, build decks, understand rules, and discuss strategy and meta. Be concise and accurate. Format all responses in markdown: use **bold** for card names, bullet points for lists, headings for sections, and clear paragraph breaks for readability.`;
+    const systemContent = context ? `${base}\n\n${context}` : base;
 
     const messages = [
       {

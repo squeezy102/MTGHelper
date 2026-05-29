@@ -8,17 +8,21 @@ const DISPLAYED_FORMATS = [
   'commander', 'pauper', 'historic', 'alchemy', 'explorer', 'brawl'
 ];
 
-// Common English words that appear capitalized but are not card names
+// Common English words that are unlikely to be card names (all lowercase for comparison)
 const COMMON_WORDS = new Set([
-  'The', 'A', 'An', 'It', 'He', 'She', 'We', 'They', 'You', 'I',
-  'What', 'How', 'When', 'Where', 'Why', 'Who', 'Which',
-  'This', 'That', 'These', 'Those', 'My', 'Your', 'His', 'Her', 'Our', 'Their',
-  'Is', 'Are', 'Was', 'Were', 'Has', 'Have', 'Had', 'Do', 'Does', 'Did',
-  'Can', 'Could', 'Would', 'Should', 'Will', 'May', 'Might', 'Must', 'Shall',
-  'Be', 'Been', 'Being', 'And', 'But', 'Not', 'Also', 'Just', 'Then', 'Now',
-  'Tell', 'Show', 'Give', 'Make', 'Let', 'Put', 'Get', 'Use', 'See', 'Ask',
-  'Please', 'Thanks', 'Hello', 'Hi', 'Hey', 'Yes', 'No', 'Okay', 'Ok',
-  'Magic', 'Card', 'Cards', 'Deck', 'Format', 'Turn', 'Game', 'Play', 'Player',
+  'the', 'a', 'an', 'it', 'he', 'she', 'we', 'they', 'you', 'i',
+  'what', 'how', 'when', 'where', 'why', 'who', 'which',
+  'this', 'that', 'these', 'those', 'my', 'your', 'his', 'her', 'our', 'their',
+  'is', 'are', 'was', 'were', 'has', 'have', 'had', 'do', 'does', 'did',
+  'can', 'could', 'would', 'should', 'will', 'may', 'might', 'must', 'shall',
+  'be', 'been', 'being', 'and', 'but', 'not', 'also', 'just', 'then', 'now',
+  'tell', 'show', 'give', 'make', 'let', 'put', 'get', 'use', 'see', 'ask',
+  'please', 'thanks', 'hello', 'hi', 'hey', 'yes', 'no', 'okay', 'ok',
+  'magic', 'card', 'cards', 'deck', 'format', 'turn', 'game', 'play', 'played',
+  'player', 'about', 'more', 'some', 'any', 'all', 'for', 'from', 'with',
+  'into', 'onto', 'over', 'like', 'than', 'very', 'much', 'want', 'need',
+  'think', 'know', 'look', 'help', 'good', 'bad', 'new', 'old', 'here',
+  'there', 'its', 'their', 'said', 'each', 'other', 'time', 'back',
 ]);
 
 class ScryfallProvider extends BaseProvider {
@@ -56,21 +60,35 @@ class ScryfallProvider extends BaseProvider {
   }
 
   _extractCardNames(message) {
-    const names = [];
+    const candidates = [];
 
-    // Quoted strings - highest confidence
+    // Quoted strings - highest confidence, try as-is
     const quoted = message.match(/"([^"]+)"/g) || [];
-    names.push(...quoted.map(q => q.replace(/"/g, '').trim()));
+    for (const q of quoted) candidates.push(q.replace(/"/g, '').trim());
 
-    // Multi-word capitalized sequences (2-4 words)
-    const multiWord = message.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})\b/g) || [];
-    names.push(...multiWord);
+    // Clean to plain words
+    const words = message.replace(/[^a-zA-Z\s'-]/g, ' ').split(/\s+/).filter(w => w.length >= 3);
+    const lc = words.map(w => w.toLowerCase());
 
-    // Single capitalized words that aren't common English words
-    const singleWord = message.match(/\b([A-Z][a-z]{2,})\b/g) || [];
-    names.push(...singleWord.filter(w => !COMMON_WORDS.has(w)));
+    // 3-word sequences starting with a non-common word
+    for (let i = 0; i <= words.length - 3; i++) {
+      if (!COMMON_WORDS.has(lc[i])) candidates.push(words.slice(i, i + 3).join(' '));
+    }
 
-    return [...new Set(names)];
+    // 2-word sequences where at least one word is non-common
+    for (let i = 0; i <= words.length - 2; i++) {
+      if (!COMMON_WORDS.has(lc[i]) || !COMMON_WORDS.has(lc[i + 1])) {
+        candidates.push(words.slice(i, i + 2).join(' '));
+      }
+    }
+
+    // Single non-common words (min 4 chars to reduce noise)
+    for (let i = 0; i < words.length; i++) {
+      if (!COMMON_WORDS.has(lc[i]) && words[i].length >= 4) candidates.push(words[i]);
+    }
+
+    // Deduplicate and cap to limit API calls
+    return [...new Set(candidates)].slice(0, 8);
   }
 
   async _fetchCard(name) {
