@@ -6,13 +6,15 @@ class OllamaService {
     this.model = 'llama3.1';
   }
 
-  async sendMessage(message, conversationHistory = []) {
+  async sendMessage(message, conversationHistory = [], context = null) {
+    const systemContent = context
+      ? `You are an expert Magic: The Gathering assistant. You help players look up cards, build decks, understand rules, and discuss strategy and meta. Be concise and accurate.\n\n${context}`
+      : `You are an expert Magic: The Gathering assistant. You help players look up cards, build decks, understand rules, and discuss strategy and meta. Be concise and accurate.`;
+
     const messages = [
       {
         role: 'system',
-        content: `You are an expert Magic: The Gathering assistant. 
-        You help players look up cards, build decks, understand rules, 
-        and discuss strategy and meta. Be concise and accurate.`
+        content: systemContent
       },
       ...conversationHistory,
       {
