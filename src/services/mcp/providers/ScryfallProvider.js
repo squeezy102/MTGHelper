@@ -35,19 +35,20 @@ class ScryfallProvider extends BaseProvider {
     console.log('[Scryfall] Candidates extracted:', cardNames);
     if (cardNames.length === 0) return { contextText: null, cards: [] };
 
+    // Try all candidates - extraction already caps the list
     const rawCards = await Promise.all(
-      cardNames.slice(0, MAX_CARDS).map(name => this._fetchCard(name))
+      cardNames.map(name => this._fetchCard(name))
     );
     const validCards = rawCards.filter(Boolean);
     if (validCards.length === 0) return { contextText: null, cards: [] };
 
-    // Deduplicate by card id (multiple name variants can resolve to the same card)
+    // Deduplicate by card id, then cap at MAX_CARDS unique results
     const seen = new Set();
     const uniqueCards = validCards.filter(c => {
       if (seen.has(c.id)) return false;
       seen.add(c.id);
       return true;
-    });
+    }).slice(0, MAX_CARDS);
 
     const cards = await Promise.all(
       uniqueCards.map(raw => this._buildCardData(raw, intentFlags))
@@ -63,33 +64,31 @@ class ScryfallProvider extends BaseProvider {
   _extractCardNames(message) {
     const candidates = [];
 
-    // Quoted strings - highest confidence, try as-is
+    // 1. Quoted strings - highest confidence
     const quoted = message.match(/"([^"]+)"/g) || [];
     for (const q of quoted) candidates.push(q.replace(/"/g, '').trim());
 
-    // Clean to plain words
-    const words = message.replace(/[^a-zA-Z\s'-]/g, ' ').split(/\s+/).filter(w => w.length >= 3);
+    const words = message.replace(/[^a-zA-Z\s'-]/g, ' ').split(/\s+/).filter(w => w.length >= 2);
     const lc = words.map(w => w.toLowerCase());
 
-    // 3-word sequences starting with a non-common word
-    for (let i = 0; i <= words.length - 3; i++) {
-      if (!COMMON_WORDS.has(lc[i])) candidates.push(words.slice(i, i + 3).join(' '));
-    }
-
-    // 2-word sequences where at least one word is non-common
+    // 2. 2-word sequences (highest signal - most card names are 1-3 words)
     for (let i = 0; i <= words.length - 2; i++) {
       if (!COMMON_WORDS.has(lc[i]) || !COMMON_WORDS.has(lc[i + 1])) {
         candidates.push(words.slice(i, i + 2).join(' '));
       }
     }
 
-    // Single non-common words (min 4 chars to reduce noise)
+    // 3. Single non-common words (min 3 chars - catches short names like "Opt")
     for (let i = 0; i < words.length; i++) {
-      if (!COMMON_WORDS.has(lc[i]) && words[i].length >= 4) candidates.push(words[i]);
+      if (!COMMON_WORDS.has(lc[i]) && words[i].length >= 3) candidates.push(words[i]);
     }
 
-    // Deduplicate and cap to limit API calls
-    return [...new Set(candidates)].slice(0, 8);
+    // 4. 3-word sequences as a fallback (catches "Sheltered by Ghosts" style names)
+    for (let i = 0; i <= words.length - 3; i++) {
+      if (!COMMON_WORDS.has(lc[i])) candidates.push(words.slice(i, i + 3).join(' '));
+    }
+
+    return [...new Set(candidates)].slice(0, 12);
   }
 
   async _fetchCard(name) {
