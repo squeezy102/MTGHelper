@@ -5,7 +5,126 @@
 }
 
 body {
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   background-color: #1a1a1a;
   color: #e0e0e0;
-  font-family: sans-serif;
+}
+
+.main-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  width: 50%;
+}
+
+.app-header {
+  height: 60px;
+  background-color: #111;
+  border-bottom: 2px solid #c89b3c;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #c89b3c;
+}
+
+.chat-history {
+  flex: 1;
+  background-color: #1a1a1a;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.chat-input-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background-color: #111;
+  border-top: 1px solid #333;
+  flex-shrink: 0;
+}
+
+.chat-input-bar input {
+  width: 100%;
+  padding: 10px 14px;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-size: 0.95rem;
+}
+
+.chat-input-bar input:focus {
+  outline: none;
+  border-color: #c89b3c;
+}
+
+.chat-input-bar button {
+  width: 100%;
+  padding: 10px;
+  background-color: #c89b3c;
+  border: none;
+  border-radius: 4px;
+  color: #111;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.chat-input-bar button:hover {
+  background-color: #e0b84a;
+}
+
+.divider {
+  width: 12px;
+  background-color: #111;
+  border-left: 1px solid #333;
+  border-right: 1px solid #333;
+}
+
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background-color: #1a1a1a;
+}
+
+.card-image-section {
+  flex: 4;
+  background-color: #222;
+  border-bottom: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.card-info-section {
+  flex: 3;
+  background-color: #1e1e1e;
+  border-bottom: 1px solid #333;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.card-meta-section {
+  flex: 2;
+  background-color: #1a1a1a;
+  padding: 16px;
+  overflow-y: auto;
 }
