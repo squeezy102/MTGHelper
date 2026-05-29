@@ -8,6 +8,19 @@ const DISPLAYED_FORMATS = [
   'commander', 'pauper', 'historic', 'alchemy', 'explorer', 'brawl'
 ];
 
+// Common English words that appear capitalized but are not card names
+const COMMON_WORDS = new Set([
+  'The', 'A', 'An', 'It', 'He', 'She', 'We', 'They', 'You', 'I',
+  'What', 'How', 'When', 'Where', 'Why', 'Who', 'Which',
+  'This', 'That', 'These', 'Those', 'My', 'Your', 'His', 'Her', 'Our', 'Their',
+  'Is', 'Are', 'Was', 'Were', 'Has', 'Have', 'Had', 'Do', 'Does', 'Did',
+  'Can', 'Could', 'Would', 'Should', 'Will', 'May', 'Might', 'Must', 'Shall',
+  'Be', 'Been', 'Being', 'And', 'But', 'Not', 'Also', 'Just', 'Then', 'Now',
+  'Tell', 'Show', 'Give', 'Make', 'Let', 'Put', 'Get', 'Use', 'See', 'Ask',
+  'Please', 'Thanks', 'Hello', 'Hi', 'Hey', 'Yes', 'No', 'Okay', 'Ok',
+  'Magic', 'Card', 'Cards', 'Deck', 'Format', 'Turn', 'Game', 'Play', 'Player',
+]);
+
 class ScryfallProvider extends BaseProvider {
   canHandle(intentFlags) {
     return true;
@@ -23,8 +36,16 @@ class ScryfallProvider extends BaseProvider {
     const validCards = rawCards.filter(Boolean);
     if (validCards.length === 0) return { contextText: null, cards: [] };
 
+    // Deduplicate by card id (multiple name variants can resolve to the same card)
+    const seen = new Set();
+    const uniqueCards = validCards.filter(c => {
+      if (seen.has(c.id)) return false;
+      seen.add(c.id);
+      return true;
+    });
+
     const cards = await Promise.all(
-      validCards.map(raw => this._buildCardData(raw, intentFlags))
+      uniqueCards.map(raw => this._buildCardData(raw, intentFlags))
     );
 
     const contextText = cards
@@ -37,11 +58,17 @@ class ScryfallProvider extends BaseProvider {
   _extractCardNames(message) {
     const names = [];
 
+    // Quoted strings - highest confidence
     const quoted = message.match(/"([^"]+)"/g) || [];
     names.push(...quoted.map(q => q.replace(/"/g, '').trim()));
 
-    const capitalized = message.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})\b/g) || [];
-    names.push(...capitalized);
+    // Multi-word capitalized sequences (2-4 words)
+    const multiWord = message.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})\b/g) || [];
+    names.push(...multiWord);
+
+    // Single capitalized words that aren't common English words
+    const singleWord = message.match(/\b([A-Z][a-z]{2,})\b/g) || [];
+    names.push(...singleWord.filter(w => !COMMON_WORDS.has(w)));
 
     return [...new Set(names)];
   }
@@ -84,13 +111,18 @@ class ScryfallProvider extends BaseProvider {
       manaCost: raw.mana_cost || null,
       typeLine: raw.type_line,
       oracleText: raw.oracle_text || null,
+      flavorText: raw.flavor_text || null,
       power: raw.power || null,
       toughness: raw.toughness || null,
+      artist: raw.artist || null,
+      setName: raw.set_name || null,
+      collectorNumber: raw.collector_number || null,
       imageUri: raw.image_uris?.normal
         || raw.card_faces?.[0]?.image_uris?.normal
         || null,
       legalities: raw.legalities || {},
       prices: raw.prices || {},
+      arenaId: raw.arena_id || null,
       rulings,
     };
   }
