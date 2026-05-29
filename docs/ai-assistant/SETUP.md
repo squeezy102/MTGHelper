@@ -18,7 +18,7 @@ If you get a "running scripts is disabled" error in PowerShell:
 
 1. Clone the repo: `git clone https://github.com/squeezy102/MTGHelper.git`
 2. Open folder in VS Code
-3. Open terminal with Ctrl + `
+3. Open terminal with Ctrl+`
 4. Install dependencies: `npm install`
 
 ## Electron Binary Fix (if needed)
@@ -36,10 +36,15 @@ If Electron fails to download its binary automatically:
 
     npm start
 
+This runs `webpack` to bundle the renderer, then launches Electron. The bundle
+is written to `dist/` (excluded from git - regenerated on every start).
+
 ## Development Notes
 
 - Ollama runs as a background service automatically after first install
-- Changes to main.js require a full app restart
-- Changes to HTML/CSS can be refreshed with Ctrl+R in the app window
-- All development work happens on the dev branch
-- Only merge to master at stable milestones
+- `npm start` always rebuilds the Webpack bundle before launching
+- Changes to `main.js` or anything in `src/ipc/` or `src/services/` require a full app restart (`npm start`)
+- Changes to `src/index.html` or `src/styles/` can be refreshed with Ctrl+R in the app window
+- Changes to `src/controllers/` require a Webpack rebuild - run `npm run build` then Ctrl+R, or just `npm start`
+- Open DevTools in the app window with Ctrl+Shift+I
+- All development work happens on the `dev` branch - only merge to `master` at stable milestones
