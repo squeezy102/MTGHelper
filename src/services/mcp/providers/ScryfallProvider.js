@@ -3,6 +3,10 @@ const BaseProvider = require('./BaseProvider');
 const SCRYFALL_BASE = 'https://api.scryfall.com';
 const MAX_CARDS = 5;
 const MAX_RULINGS = 5;
+const DISPLAYED_FORMATS = [
+  'standard', 'pioneer', 'modern', 'legacy', 'vintage',
+  'commander', 'pauper', 'historic', 'alchemy', 'explorer', 'brawl'
+];
 
 class ScryfallProvider extends BaseProvider {
   canHandle(intentFlags) {
@@ -11,29 +15,31 @@ class ScryfallProvider extends BaseProvider {
 
   async getContext(message, intentFlags) {
     const cardNames = this._extractCardNames(message);
-    if (cardNames.length === 0) return null;
+    if (cardNames.length === 0) return { contextText: null, cards: [] };
 
-    const cards = await Promise.all(
+    const rawCards = await Promise.all(
       cardNames.slice(0, MAX_CARDS).map(name => this._fetchCard(name))
     );
-    const validCards = cards.filter(Boolean);
-    if (validCards.length === 0) return null;
+    const validCards = rawCards.filter(Boolean);
+    if (validCards.length === 0) return { contextText: null, cards: [] };
 
-    const contextParts = await Promise.all(
-      validCards.map(card => this._buildCardContext(card, intentFlags))
+    const cards = await Promise.all(
+      validCards.map(raw => this._buildCardData(raw, intentFlags))
     );
 
-    return contextParts.filter(Boolean).join('\n\n');
+    const contextText = cards
+      .map(card => this._cardToContextText(card, intentFlags))
+      .join('\n\n');
+
+    return { contextText, cards };
   }
 
   _extractCardNames(message) {
     const names = [];
 
-    // Quoted strings are treated as definite card names
     const quoted = message.match(/"([^"]+)"/g) || [];
     names.push(...quoted.map(q => q.replace(/"/g, '').trim()));
 
-    // Capitalized multi-word sequences (2-4 words) as likely card names
     const capitalized = message.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})\b/g) || [];
     names.push(...capitalized);
 
@@ -67,37 +73,51 @@ class ScryfallProvider extends BaseProvider {
     }
   }
 
-  async _buildCardContext(card, intentFlags) {
+  async _buildCardData(raw, intentFlags) {
+    const rulings = intentFlags.isRulesQuestion
+      ? (await this._fetchRulings(raw.id)).slice(0, MAX_RULINGS).map(r => r.comment)
+      : [];
+
+    return {
+      id: raw.id,
+      name: raw.name,
+      manaCost: raw.mana_cost || null,
+      typeLine: raw.type_line,
+      oracleText: raw.oracle_text || null,
+      power: raw.power || null,
+      toughness: raw.toughness || null,
+      imageUri: raw.image_uris?.normal
+        || raw.card_faces?.[0]?.image_uris?.normal
+        || null,
+      legalities: raw.legalities || {},
+      prices: raw.prices || {},
+      rulings,
+    };
+  }
+
+  _cardToContextText(card, intentFlags) {
     const parts = [
-      `${card.name} ${card.mana_cost || ''} | ${card.type_line}`,
-      card.oracle_text || ''
+      `${card.name} ${card.manaCost || ''} | ${card.typeLine}`,
+      card.oracleText || '',
     ];
 
-    if (card.power && card.toughness) {
-      parts.push(`${card.power}/${card.toughness}`);
-    }
+    if (card.power) parts.push(`${card.power}/${card.toughness}`);
 
-    if (intentFlags.isRulesQuestion) {
-      const rulings = await this._fetchRulings(card.id);
-      if (rulings.length > 0) {
-        const lines = rulings.slice(0, MAX_RULINGS).map(r => `- ${r.comment}`);
-        parts.push(`Rulings:\n${lines.join('\n')}`);
-      }
+    if (intentFlags.isRulesQuestion && card.rulings.length > 0) {
+      parts.push(`Rulings:\n${card.rulings.map(r => `- ${r}`).join('\n')}`);
     }
 
     if (intentFlags.isLegalityQuestion || intentFlags.isArenaQuestion) {
-      const relevant = intentFlags.isArenaQuestion
+      const formats = intentFlags.isArenaQuestion
         ? ['standard', 'historic', 'alchemy', 'explorer']
-        : Object.keys(card.legalities);
-
-      const lines = relevant
-        .filter(fmt => card.legalities[fmt] && card.legalities[fmt] !== 'not_available')
-        .map(fmt => `${fmt}: ${card.legalities[fmt]}`);
-
+        : DISPLAYED_FORMATS;
+      const lines = formats
+        .filter(f => card.legalities[f] && card.legalities[f] !== 'not_available')
+        .map(f => `${f}: ${card.legalities[f]}`);
       if (lines.length) parts.push(`Legality: ${lines.join(' | ')}`);
     }
 
-    if (intentFlags.isPricingQuestion && card.prices) {
+    if (intentFlags.isPricingQuestion) {
       const prices = [];
       if (card.prices.usd) prices.push(`$${card.prices.usd}`);
       if (card.prices.usd_foil) prices.push(`$${card.prices.usd_foil} foil`);

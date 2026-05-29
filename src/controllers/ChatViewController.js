@@ -1,5 +1,6 @@
 class ChatViewController {
-  constructor() {
+  constructor(cardPanelController) {
+    this.cardPanelController = cardPanelController;
     this.conversationHistory = [];
     this.chatHistory = document.getElementById('chatHistory');
     this.chatInput = document.getElementById('chatInput');
@@ -20,10 +21,14 @@ class ChatViewController {
     this.setLoading(true);
 
     try {
-      const response = await window.mtgHelper.sendMessage(message, this.conversationHistory);
+      const { response, cards } = await window.mtgHelper.sendMessage(message, this.conversationHistory);
       this.conversationHistory.push({ role: 'user', content: message });
       this.conversationHistory.push({ role: 'assistant', content: response });
       this.appendMessage('assistant', response);
+
+      if (cards && cards.length > 0) {
+        this.cardPanelController.addCards(cards);
+      }
     } catch (error) {
       this.appendMessage('error', 'Something went wrong. Is Ollama running?');
     } finally {

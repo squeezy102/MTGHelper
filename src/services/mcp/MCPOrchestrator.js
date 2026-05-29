@@ -15,19 +15,23 @@ class MCPOrchestrator {
     this.providers = [new ScryfallProvider()];
   }
 
-  async getContext(message) {
+  async getResult(message) {
     const intentFlags = this._detectIntent(message);
 
-    const contexts = await Promise.all(
+    const results = await Promise.all(
       this.providers
         .filter(p => p.canHandle(intentFlags))
         .map(p => p.getContext(message, intentFlags))
     );
 
-    const valid = contexts.filter(Boolean);
-    if (valid.length === 0) return null;
+    const cards = results.flatMap(r => r.cards || []);
+    const contextParts = results.map(r => r.contextText).filter(Boolean);
 
-    return `[MTG Reference Data]\n${valid.join('\n\n')}\n[End Reference Data]`;
+    const context = contextParts.length > 0
+      ? `[MTG Reference Data]\n${contextParts.join('\n\n')}\n[End Reference Data]`
+      : null;
+
+    return { context, cards };
   }
 
   _detectIntent(message) {

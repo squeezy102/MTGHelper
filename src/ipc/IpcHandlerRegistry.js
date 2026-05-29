@@ -10,8 +10,9 @@ class IpcHandlerRegistry {
 
   register() {
     ipcMain.handle('send-message', async (event, message, history) => {
-      const context = await this.orchestrator.getContext(message);
-      return await this.ollamaService.sendMessage(message, history, context);
+      const { context, cards } = await this.orchestrator.getResult(message);
+      const response = await this.ollamaService.sendMessage(message, history, context);
+      return { response, cards };
     });
   }
 }
