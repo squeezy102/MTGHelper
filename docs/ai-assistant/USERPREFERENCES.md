@@ -32,6 +32,14 @@ Preferences and working style guidance for AI assistant sessions on this project
   purpose they serve
 - No unnecessary comments - only add a comment when the WHY is non-obvious
 
+## Debugging
+
+- User is inexperienced with debugging tools in IDEs - hand-hold through the process
+- Explain exactly what to look at, where to look, and what to look for
+- Don't assume familiarity with DevTools, console output, or error messages
+- When asking the user to check output, tell them precisely: which window to open,
+  which tab to click, what the output will look like, and what to copy/paste back
+
 ## App Restart Protocol
 
 - Always explicitly call out when a change requires a full app restart (`npm start`)
