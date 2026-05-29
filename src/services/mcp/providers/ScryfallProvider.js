@@ -32,6 +32,7 @@ class ScryfallProvider extends BaseProvider {
 
   async getContext(message, intentFlags) {
     const cardNames = this._extractCardNames(message);
+    console.log('[Scryfall] Candidates extracted:', cardNames);
     if (cardNames.length === 0) return { contextText: null, cards: [] };
 
     const rawCards = await Promise.all(
@@ -93,13 +94,15 @@ class ScryfallProvider extends BaseProvider {
 
   async _fetchCard(name) {
     try {
-      const res = await fetch(
-        `${SCRYFALL_BASE}/cards/named?fuzzy=${encodeURIComponent(name)}`,
-        { headers: { 'User-Agent': 'MTGHelper/1.0' } }
-      );
+      const url = `${SCRYFALL_BASE}/cards/named?fuzzy=${encodeURIComponent(name)}`;
+      const res = await fetch(url, { headers: { 'User-Agent': 'MTGHelper/1.0' } });
+      console.log(`[Scryfall] "${name}" -> HTTP ${res.status}`);
       if (!res.ok) return null;
-      return await res.json();
-    } catch {
+      const card = await res.json();
+      console.log(`[Scryfall] "${name}" resolved to: ${card.name}`);
+      return card;
+    } catch (err) {
+      console.error(`[Scryfall] fetch error for "${name}":`, err.message);
       return null;
     }
   }

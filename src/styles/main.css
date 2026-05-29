@@ -131,9 +131,9 @@ body {
 }
 
 .chat-message--assistant {
-  background-color: #1e2a1e;
-  border: 1px solid #2a3d2a;
-  color: #d8e8d8;
+  background-color: #202020;
+  border: 1px solid #333;
+  color: #e0e0e0;
 }
 
 .chat-message--error {
@@ -161,7 +161,8 @@ body {
 }
 
 .chat-message--assistant strong {
-  color: #c89b3c;
+  color: #f0f0f0;
+  font-weight: 600;
 }
 
 .chat-message--assistant em {

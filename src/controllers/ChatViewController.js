@@ -25,7 +25,9 @@ class ChatViewController {
     this.setLoading(true);
 
     try {
-      const { response, cards } = await window.mtgHelper.sendMessage(message, this.conversationHistory);
+      const result = await window.mtgHelper.sendMessage(message, this.conversationHistory);
+      console.log('[Chat] IPC result:', result);
+      const { response, cards } = result;
       this.conversationHistory.push({ role: 'user', content: message });
       this.conversationHistory.push({ role: 'assistant', content: response });
       this.appendMessage('assistant', response);
