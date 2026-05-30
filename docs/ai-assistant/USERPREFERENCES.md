@@ -40,6 +40,12 @@ Preferences and working style guidance for AI assistant sessions on this project
 - When asking the user to check output, tell them precisely: which window to open,
   which tab to click, what the output will look like, and what to copy/paste back
 
+## Documentation
+
+- Proactively flag when something discussed should be written to documentation
+- Ask before writing - identify which document it belongs in and confirm with the user
+- If a new document seems warranted, suggest it and explain why before creating it
+
 ## App Restart Protocol
 
 - Always explicitly call out when a change requires a full app restart (`npm start`)
