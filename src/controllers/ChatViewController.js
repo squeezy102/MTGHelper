@@ -14,6 +14,19 @@ class ChatViewController {
     this.chatInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') this.handleSend();
     });
+
+    this._checkCatalogStatus();
+  }
+
+  async _checkCatalogStatus() {
+    try {
+      const { status, errorMessage } = await window.mtgHelper.getCatalogStatus();
+      if (status === 'failed') {
+        this.appendMessage('error', errorMessage);
+      }
+    } catch {
+      // silently ignore - non-critical startup check
+    }
   }
 
   async handleSend() {

@@ -11,8 +11,8 @@ const INTENT_KEYWORDS = {
 };
 
 class MCPOrchestrator {
-  constructor() {
-    this.providers = [new ScryfallProvider()];
+  constructor(catalog) {
+    this.providers = [new ScryfallProvider(catalog)];
   }
 
   async getResult(message) {

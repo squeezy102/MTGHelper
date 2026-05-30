@@ -1,5 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('mtgHelper', {
-  sendMessage: (message, history) => ipcRenderer.invoke('send-message', message, history)
+  sendMessage: (message, history) => ipcRenderer.invoke('send-message', message, history),
+  getCatalogStatus: () => ipcRenderer.invoke('get-catalog-status'),
 });

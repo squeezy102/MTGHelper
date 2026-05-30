@@ -3,9 +3,10 @@ const OllamaService = require('../services/OllamaService');
 const MCPOrchestrator = require('../services/mcp/MCPOrchestrator');
 
 class IpcHandlerRegistry {
-  constructor() {
+  constructor(catalog) {
+    this.catalog = catalog;
     this.ollamaService = new OllamaService();
-    this.orchestrator = new MCPOrchestrator();
+    this.orchestrator = new MCPOrchestrator(catalog);
   }
 
   register() {
@@ -13,6 +14,10 @@ class IpcHandlerRegistry {
       const { context, cards } = await this.orchestrator.getResult(message);
       const response = await this.ollamaService.sendMessage(message, history, context);
       return { response, cards };
+    });
+
+    ipcMain.handle('get-catalog-status', () => {
+      return this.catalog.getStatus();
     });
   }
 }
