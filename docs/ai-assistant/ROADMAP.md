@@ -22,29 +22,43 @@ getting the scaffolding right so everything that follows has a solid home.
 
 ## Phase 2 - Lookup Tab
 
-Enhance the Lookup tab as a standalone card research tool, no longer just a
-reactive display from chat.
+Enhance the Lookup tab as a standalone manual card reference tool.
 
 - Manual card search (search bar, results list)
 - Full card detail view (image, info, meta - same three sections)
 - Batch import from a deck list (paste a list, fetch all cards with rate limiting)
 - No cap on card count
+- LLM response card matching (REQ-009) - run catalog matching on AI responses,
+  feed both user and LLM card finds to Lookup when "Write to Lookup" is on
 
-**Requirements covered:** REQ-004 (complete)
+**Requirements covered:** REQ-004 (complete), REQ-009
 
 ---
 
-## Phase 3 - Deck Builder Tab
+## Phase 3a - Deck Builder: Conversational Layer
 
-Build the deck management and analysis tool.
+Build the AI-assisted conversational half of the Deck Builder tab.
 
-- Deck list with card counts and total count
+- Split-pane layout: user side (input + cards) / LLM side (response + cards)
+- Card matching on both sides of conversation (REQ-009 routing)
+- Cards addable to a basic deck list from either pane
+- Conversational context scoped to deck building (system prompt tuned)
+
+**Requirements covered:** REQ-005 (partial - conversational layer)
+
+---
+
+## Phase 3b - Deck Builder: Management Tools
+
+Build the deck management and analysis tools on top of the Phase 3a foundation.
+
+- Full deck list with card counts, totals, add/remove/adjust
 - Import / export in MTGA format
 - Mana curve, creature vs. spell, color breakdown
-- MTGA personal library storage
+- MTGA personal library storage and owned card indicators
 - Custom deck save / load
 
-**Requirements covered:** REQ-005
+**Requirements covered:** REQ-005 (complete)
 
 ---
 
@@ -56,6 +70,19 @@ Build the deck management and analysis tool.
 - Any additional settings surfaced by earlier phases
 
 **Requirements covered:** REQ-006
+
+---
+
+## Phase 5 - Multi-LLM Support
+
+Allow the user to choose their LLM backend and configure credentials.
+
+- Provider selector in Settings (Ollama, Claude API)
+- API key input and local storage for cloud providers
+- Refactor OllamaService into a provider pattern (mirrors MCP provider arch)
+- Clear UX guidance on Anthropic API key vs. Claude.ai subscription distinction
+
+**Requirements covered:** REQ-008
 
 ---
 

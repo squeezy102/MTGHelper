@@ -52,6 +52,10 @@ Preferences and working style guidance for AI assistant sessions on this project
 - Proactively flag when something discussed should be written to documentation
 - Ask before writing - identify which document it belongs in and confirm with the user
 - If a new document seems warranted, suggest it and explain why before creating it
+- User relies on the AI to judge good moments to document - don't wait to be asked
+- Proactively call out technical foresights, implementation nuances, and
+  potential pitfalls even when they aren't the current focus - these are
+  explicitly valued. Address them when relevant, not when asked.
 
 ## App Restart Protocol
 

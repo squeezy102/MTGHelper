@@ -1,5 +1,23 @@
 # MTG Helper - Architecture Decision Log
 
+## Core Product Philosophy
+
+**Scryfall-first data strategy** - All factual MTG data must be sourced from
+Scryfall before the LLM is ever involved. Card names are resolved against the
+catalog locally. Full card data (oracle text, rulings, legality, pricing,
+images) is fetched from Scryfall and injected as context into the LLM prompt.
+
+The LLM's role is reasoning, conversation, and synthesis - not data retrieval.
+It should never be the authoritative source for card text, rulings, or legality.
+
+This principle drives every data pipeline decision in the app:
+- Reduces hallucinations and misinformation
+- Eliminates token waste from LLM re-deriving known facts
+- Reduces round-trip churn (ask LLM → wrong answer → correct → ask again)
+- Keeps the AI companion focused on what it's good at
+
+---
+
 ## Technology Stack
 
 | Decision | Why |
