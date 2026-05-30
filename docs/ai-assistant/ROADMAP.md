@@ -35,6 +35,25 @@ Enhance the Lookup tab as a standalone manual card reference tool.
 
 ---
 
+## Phase 2b - Knowledge Base
+
+Build the foundational MTG knowledge layer that grounds every LLM conversation
+in verified, source-traceable facts.
+
+- `resources/knowledge/` directory structure (sources/, topics/, manifest.json)
+- KnowledgeBaseService: startup loading, keyword matching, always-inject glossary,
+  MCPOrchestrator integration
+- ContentManagerService: fetch WotC Comprehensive Rules, Scryfall catalogs,
+  MTGJson; rebuild official topic files; 30-day auto-refresh + user-triggered
+- Seed topics/ with official-source versions of: glossary, rules & mechanics,
+  card types & interactions, formats & legality
+- Deck building strategy file ships as a user-maintained example with disclaimer
+- KB status visible in Settings (which topics are official vs. user-maintained)
+
+**Requirements covered:** REQ-010, REQ-011
+
+---
+
 ## Phase 3a - Deck Builder: Conversational Layer
 
 Build the AI-assisted conversational half of the Deck Builder tab.
@@ -67,9 +86,12 @@ Build the deck management and analysis tools on top of the Phase 3a foundation.
 - Settings dialogue accessible from the app
 - Feed Lookup from Chat toggle
 - Inject card context into prompts toggle (with token usage tooltip)
+- LLM provider selector and API key management (REQ-008)
+- Knowledge base status panel: official vs. user topics, last refresh, manual trigger
+- User profile editor: persistent context injected into every LLM session (REQ-012)
 - Any additional settings surfaced by earlier phases
 
-**Requirements covered:** REQ-006
+**Requirements covered:** REQ-006, REQ-008 (partial), REQ-012
 
 ---
 

@@ -168,3 +168,15 @@ relevant phase. Remove an entry once it has been resolved or designed around.
   products. A Claude.ai Pro subscription does not grant API access. Users
   obtain an API key from console.anthropic.com billed by token. The Settings
   UI must make this clear with a brief explainer to avoid user confusion.
+
+- **REQ-011 - WotC Comprehensive Rules parsing:** The rules document is
+  ~280,000 words with its own internal section numbering and formatting. Parsing
+  it into clean topic files is non-trivial. The document format could change
+  between WotC releases. Do not underestimate this work - budget time for
+  a robust parser and test against multiple versions of the document.
+
+- **REQ-011 - sources/ populated on first run:** A fresh clone has no
+  sources/ directory content (gitignored). The app must handle the case where
+  source documents haven't been fetched yet - either run ContentManagerService
+  automatically on first launch, or ensure the seeded topics/ files are used
+  as fallback until the first refresh completes.

@@ -2,6 +2,12 @@
 
 ## Core Product Philosophy
 
+**Why this app exists** - Built out of direct frustration with LLMs confidently
+stating incorrect MTG rules, misidentifying cards, and failing to retain
+corrections across sessions. The goal is an AI companion that is grounded,
+honest, and verifiably correct - not one that sounds plausible but makes things
+up. Every architectural decision flows from this.
+
 **Scryfall-first data strategy** - All factual MTG data must be sourced from
 Scryfall before the LLM is ever involved. Card names are resolved against the
 catalog locally. Full card data (oracle text, rulings, legality, pricing,
@@ -15,6 +21,29 @@ This principle drives every data pipeline decision in the app:
 - Eliminates token waste from LLM re-deriving known facts
 - Reduces round-trip churn (ask LLM → wrong answer → correct → ask again)
 - Keeps the AI companion focused on what it's good at
+
+**Knowledge base accuracy policy** - The app's official knowledge base content
+must be 100% traceable to an authoritative published source (WotC Comprehensive
+Rules, Scryfall API, MTGJson). Light formatting for readability is acceptable.
+Invented content, LLM-generated content, and unverifiable claims are not
+acceptable in any official topic file. The app stands behind official content;
+user-maintained content is explicitly the user's responsibility.
+
+**No LLM-generated knowledge base content** - Using an LLM to generate or
+"update" knowledge base files was considered and rejected. An LLM hallucinating
+content and storing it as ground truth would directly undermine the app's
+core purpose. All official KB content must originate from machine-readable
+data published by WotC, Scryfall, or MTGJson.
+
+**User-maintained KB content** - Users may add their own topic files to the
+knowledge base. The app makes no claims about the accuracy of user content,
+does not maintain it, and is not responsible for errors it causes. This
+distinction is clearly communicated in the UI.
+
+**User profile persistence** - The LLM has no memory between sessions. Anything
+the user wants carried forward (play style, preferred formats, skill level) must
+be stored by the app and injected into the system prompt at session start. This
+is a first-class feature, not an afterthought.
 
 ---
 

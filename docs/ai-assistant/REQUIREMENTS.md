@@ -246,3 +246,114 @@ called; this extends it to the return trip.
 - When off, card matching only runs on user input - reduces Scryfall API calls
   for users who don't need the LLM response side populated
 - Tooltip notes the API call and token implications
+
+---
+
+## REQ-010: Knowledge Base Service
+
+A service that loads foundational MTG knowledge files and injects relevant
+content into the LLM context before each message is sent.
+
+### Directory Structure
+```
+resources/knowledge/
+  sources/        Raw official documents fetched from external sources
+                  (gitignored - populated at runtime)
+  topics/         Processed MD files injected into LLM context
+                  (committed - seeded with official content)
+  manifest.json   Topic index: keywords, source mappings, injection rules,
+                  timestamps, and source type (official vs. user)
+```
+
+### Manifest Format
+Each topic entry in manifest.json contains:
+- `id` - unique identifier
+- `file` - filename in topics/
+- `description` - what the file covers
+- `keywords` - message keywords that trigger this topic's injection
+- `alwaysInject` - if true, injected into every message regardless of keywords
+- `source` - `"official"` (app-maintained) or `"user"` (user-maintained)
+- `sourceDocs` - which source files in sources/ this topic is built from
+- `lastBuilt` - ISO timestamp of last content rebuild
+
+### KnowledgeBaseService Behavior
+- Loads all topic files at startup alongside CatalogService
+- `getRelevantContext(message)` returns at most 2 keyword-matched topic files
+- Topics flagged `alwaysInject: true` are always included (counts toward the cap
+  only if the same topic would also be keyword-matched)
+- Wired into MCPOrchestrator; injected into LLM context alongside Scryfall data
+- Adding a new topic requires only a new MD file + a manifest entry - no code change
+
+### Official vs. User Content
+- `"source": "official"` topics are built and maintained by the app's
+  ContentManagerService (REQ-011). The app stands behind their accuracy.
+- `"source": "user"` topics are created and maintained entirely by the user.
+  The app makes no claims about their accuracy. Errors, outdated information,
+  or hallucination-adjacent content in user files are the user's responsibility.
+- The distinction is visible in any KB status UI so the user always knows
+  which content is app-verified.
+
+---
+
+## REQ-011: Knowledge Base Content Manager
+
+A service that fetches authoritative source documents and rebuilds official
+knowledge base topic files from them.
+
+### Authoritative Sources
+- **WotC Comprehensive Rules** - Full plain-text rules document published by
+  Wizards of the Coast. Fetched and stored as `sources/comprehensive-rules.txt`.
+  Contains official definitions for all keywords, turn structure, combat rules,
+  the stack, and the official glossary.
+- **Scryfall Catalog API** - Provides structured lists: keyword abilities,
+  keyword actions, ability words, creature types, artifact types, enchantment
+  types, land types, spell types, and card symbology.
+- **MTGJson** - Machine-readable MTG data including keyword categorization
+  and structured type data. Version endpoint used to detect when data has changed.
+
+### What Gets Built
+The ContentManagerService processes source documents into topic MD files using
+**light formatting only** - presenting official source text cleanly without
+inventing, interpolating, or interpreting meaning. Every claim in an official
+topic file must be directly traceable to a source document.
+
+### Refresh Behavior
+- Runs automatically if no refresh has occurred in the last 30 days
+- User-triggerable from Settings (REQ-006) at any time
+- Fetches all sources, stores raw copies in `sources/`
+- Rebuilds only topics tagged `"source": "official"` in the manifest
+- Never modifies files tagged `"source": "user"`
+- Logs each update: what changed, which source, timestamp
+- App functions fully offline after first run (sources and topics cached locally)
+
+### Failure Handling
+- If a source fetch fails, the existing topic file is kept unchanged
+- Partial failures do not block the rest of the refresh
+- User is notified of any fetch failures so they know content may be stale
+
+---
+
+## REQ-012: User Profile and Persistent Context
+
+A persistent user profile that gives the LLM continuity across sessions.
+Without this, the LLM starts every session with no knowledge of the user.
+
+### Storage
+- Stored in the OS user data directory via Electron's `app.getPath('userData')`
+- Not part of the app bundle - never committed to the repo
+
+### Content
+User-editable fields that persist across sessions and are injected into the
+LLM system prompt at startup:
+- Preferred formats (e.g. Standard, Brawl, Draft)
+- Play style notes (e.g. "I prefer aggressive strategies")
+- Skill level / familiarity
+- Any other context the user wants the LLM to carry forward
+
+### Behavior
+- Empty by default - the user builds it over time
+- Injected into the system prompt at session start, before any conversation
+- Manageable from Settings (REQ-006)
+- The LLM may surface suggestions to update the profile during conversation
+  (e.g. "Want me to remember that you play Commander?") - but the user
+  controls what actually gets saved

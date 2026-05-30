@@ -1,3 +1,6 @@
 node_modules/
 node_modules/electron/dist/
 dist/
+
+# Knowledge base raw source documents (fetched at runtime by ContentManagerService)
+resources/knowledge/sources/
