@@ -40,6 +40,13 @@ Preferences and working style guidance for AI assistant sessions on this project
 - When asking the user to check output, tell them precisely: which window to open,
   which tab to click, what the output will look like, and what to copy/paste back
 
+## Git Commits
+
+- Don't commit every small change - commit at logical checkpoints (meaningful
+  chunks of related changes, working states after a feature area is complete)
+- During major restructuring, intermediate commits are acceptable as safety checkpoints
+- Avoid committing docs updates, small tweaks, and minor fixes individually - batch them
+
 ## Documentation
 
 - Proactively flag when something discussed should be written to documentation

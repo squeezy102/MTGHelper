@@ -2,42 +2,58 @@
 
 Running notes for AI assistant continuity across sessions.
 
-## Current App State
+## Current App State (as of Phase 1 completion)
 
-- Core chat loop is working end to end: user types -> Scryfall context fetched ->
-  Ollama responds -> markdown-rendered response displayed in chat
-- Card panel (right side) is implemented but right-panel display is currently
-  being debugged - tabs and 3 sections exist but cards are not reliably populating
-- Chat message formatting (REQ-002) implemented with marked.js
+- Tabbed layout (Assistant / Lookup / Deck Builder) is working
+- Each tab can be popped out into its own window; popped-out tabs are grayed out
+  in the main window nav and return when the pop-out is closed
+- Assistant tab: full-width chat with markdown rendering, "Write to Lookup" toggle
+- Lookup tab: card panel with 3-section display (image, info, meta), card tab bar,
+  card state persists when popped out (main window pushes state on did-finish-load)
+- Deck Builder tab: placeholder "coming soon" screen
+- Card catalog loaded at startup from Scryfall (~26k names); used for exact name
+  matching in messages - no more heuristic sliding window
+- Longest-match deduplication: "Meathook Massacre" dropped when "Meathook Massacre II"
+  also matches in the same message
+- Chat responses rendered as markdown via marked.js
+- USD-only pricing displayed in card meta section
 
 ## Active Work / Known Issues
 
-- Card name extraction may still miss some cards - the sliding window approach
-  generates candidate phrases and tries them against Scryfall fuzzy search, but
-  false negatives are possible (especially for slang names like "goyf" or "bolt")
-- Card panel not reliably updating in the renderer despite IPC returning cards -
-  root cause not yet confirmed; likely the extraction returning empty arrays
+- Slang card names ("bolt", "goyf") won't match the catalog - requires exact or
+  near-exact name. Acceptable for now.
+- "Write to Lookup" toggle is off by default and not persisted between sessions
+  (resets on restart). Persistence is a settings/config feature (Phase 4).
+- Deck Builder tab is a placeholder - Phase 3 work.
 
 ## File Structure
 
 ```
 MTGHelper/
-- main.js                           Electron main process entry point
-- preload.js                        IPC bridge (contextBridge)
+- main.js                           Electron entry point; loads catalog, registers
+                                    IpcHandlerRegistry and WindowManager, creates main window
+- preload.js                        contextBridge IPC surface for renderer
 - webpack.config.js                 Bundles src/renderer.js -> dist/renderer.bundle.js
 - package.json
 - docs/ai-assistant/                This directory
 - src/
-  - index.html                      App shell
-  - renderer.js                     Webpack entry - wires up controllers
+  - index.html                      App shell: nav bar + 3 tab panels
+  - renderer.js                     Webpack entry - boots AppViewController
   - styles/main.css
   - controllers/
-    - ChatViewController.js         Chat UI, markdown rendering, feeds cards to panel
-    - CardPanelController.js        Right panel: tabs, image, info, meta sections
+    - AppViewController.js          Top-level shell: tab switching, pop-out coordination,
+                                    card routing between Assistant and Lookup
+    - ChatViewController.js         Chat UI and markdown rendering; takes onCardsFound callback
+    - LookupViewController.js       Wraps CardPanelController; handles relayed cards from chat
+    - CardPanelController.js        Card tab bar + 3-section display (image, info, meta)
+    - DeckBuilderViewController.js  Placeholder
   - ipc/
-    - IpcHandlerRegistry.js         Registers IPC handlers, wires orchestrator + LLM
+    - IpcHandlerRegistry.js         Registers send-message and get-catalog-status handlers
+    - WindowManager.js              Creates/tracks pop-out windows; pushes card state on load
   - services/
     - OllamaService.js              Ollama/LLM communication
+    - CatalogService.js             Loads all ~26k Scryfall card names at startup; provides
+                                    findInMessage() for exact catalog-based name matching
     - mcp/
       - MCPOrchestrator.js          Intent detection, fans out to providers, returns {context, cards}
       - providers/
@@ -47,26 +63,30 @@ MTGHelper/
 
 ## Key Technical Notes
 
-- `"type": "commonjs"` in package.json means main-process files use require/module.exports.
-  Renderer files use ES module import/export syntax (handled by webpack). The webpack
-  rule `type: 'javascript/auto'` tells webpack to auto-detect per file rather than
-  defaulting to CJS.
-- Scryfall API rate limit: ~10 req/sec. Card extraction caps at 8 candidates to stay safe.
-- Double-faced cards (transform, modal) don't have top-level image_uris - image is at
-  card_faces[0].image_uris.normal. ScryfallProvider handles this.
-- `dist/` is in .gitignore - always regenerated by webpack on npm start.
-- Directory names are case-sensitive on Linux/Mac but not Windows. The src/services/
-  directory was originally src/Services/ (capital S) and corrected early in development.
-- Scryfall fuzzy search is case-insensitive, so card name candidates don't need to be
-  perfectly cased before sending.
+- `"type": "commonjs"` in package.json - main-process files use require/module.exports,
+  renderer files use ES module import/export (handled by webpack with `type: 'javascript/auto'`).
+- `dist/` is gitignored - always regenerated by webpack on npm start.
+- Scryfall catalog uses exact name lookup (`/cards/named?exact=`) since we now know
+  the true card name before fetching. Previously used fuzzy search.
+- Double-faced cards don't have top-level image_uris - falls back to
+  card_faces[0].image_uris.normal. Handled in ScryfallProvider._buildCardData.
+- Pop-out windows load the same index.html. AppViewController calls getViewAssignment()
+  IPC at init; WindowManager identifies the window by webContents.id and returns its
+  tab name. Main window returns null (full mode).
+- Pop-out state transfer: WindowManager listens for did-finish-load on the pop-out window,
+  then sends 'send-current-cards' to the main window. AppViewController relays
+  { cards, activeCardId } to the pop-out via relay-cards-to-lookup IPC.
+- Card ordering: first card in the array is always auto-selected when the panel is empty.
+  Subsequent card additions don't change selection. Pop-out overrides selection to
+  match activeCardId after state restore.
+- VS Code shows "File is a CommonJS module; it may be converted to an ES module" hint
+  on main-process .js files. This is a hint only, not an error - safe to ignore.
 
 ## Decisions Still Open
 
-- Chat message markdown rendering uses innerHTML without sanitization. Acceptable for
-  now (single-user desktop app, content from local LLM), but worth revisiting if the
-  app ever handles untrusted content.
-- Card name extraction uses a sliding window heuristic. A more accurate approach would
-  be a dedicated NER (named entity recognition) step, but that adds significant
-  complexity. Flag for future consideration.
-- Pricing currently sourced from Scryfall (TCGPlayer/CardMarket embedded). A direct
-  TCGPlayer API integration would give more granular data but requires an API key.
+- Chat markdown uses innerHTML without sanitization. Acceptable for a single-user
+  desktop app with local LLM, but flag if the app ever handles untrusted content.
+- "Write to Lookup" toggle state not persisted between sessions - tracked as a
+  settings feature in REQ-006 / Phase 4.
+- TCGPlayer pricing comes from Scryfall's embedded data (updated periodically).
+  A direct TCGPlayer API key would give real-time pricing but adds API key management.

@@ -15,23 +15,18 @@ class CardPanelController {
   }
 
   addCards(newCards) {
-    let newestId = null;
-
     for (const card of newCards) {
       if (this.cards.find(c => c.id === card.id)) continue;
-
-      if (this.cards.length >= MAX_CARDS) {
-        this.cards.shift();
-      }
-
+      if (this.cards.length >= MAX_CARDS) this.cards.shift();
       this.cards.push(card);
-      newestId = card.id;
     }
 
-    this._renderTabs();
-
-    if (newestId) {
-      this.selectCard(newestId);
+    if (!this.activeCardId && this.cards.length > 0) {
+      // No card selected yet - select the first one in the list
+      this.selectCard(this.cards[0].id);
+    } else {
+      // A card is already selected - just refresh the tab bar
+      this._renderTabs();
     }
   }
 
@@ -51,9 +46,9 @@ class CardPanelController {
     this.cards.splice(idx, 1);
 
     if (this.activeCardId === cardId) {
-      this.activeCardId = this.cards.length > 0
-        ? this.cards[this.cards.length - 1].id
-        : null;
+      // Select the card that was adjacent - prefer the one after, fall back to before
+      const next = this.cards[idx] || this.cards[idx - 1] || null;
+      this.activeCardId = next ? next.id : null;
     }
 
     this._renderTabs();
@@ -163,9 +158,8 @@ class CardPanelController {
   _pricingHtml(prices) {
     if (!prices) return '';
     const rows = [];
-    if (prices.usd)       rows.push(`<div class="price-row"><span>Normal</span><span>$${prices.usd}</span></div>`);
-    if (prices.usd_foil)  rows.push(`<div class="price-row"><span>Foil</span><span>$${prices.usd_foil}</span></div>`);
-    if (prices.eur)       rows.push(`<div class="price-row"><span>EUR</span><span>€${prices.eur}</span></div>`);
+    if (prices.usd)      rows.push(`<div class="price-row"><span>Normal</span><span>$${prices.usd}</span></div>`);
+    if (prices.usd_foil) rows.push(`<div class="price-row"><span>Foil</span><span>$${prices.usd_foil}</span></div>`);
     return rows.length ? `<div class="meta-block"><div class="meta-label">Price (TCGPlayer)</div>${rows.join('')}</div>` : '';
   }
 

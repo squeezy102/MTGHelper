@@ -25,7 +25,6 @@ class MCPOrchestrator {
     );
 
     const cards = results.flatMap(r => r.cards || []);
-    console.log('[MCP] Cards returning to renderer:', cards.map(c => c.name));
     const contextParts = results.map(r => r.contextText).filter(Boolean);
 
     const context = contextParts.length > 0

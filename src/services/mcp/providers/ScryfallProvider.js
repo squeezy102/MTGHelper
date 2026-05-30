@@ -22,12 +22,10 @@ class ScryfallProvider extends BaseProvider {
     const { status, errorMessage } = this.catalog.getStatus();
 
     if (status === 'failed') {
-      console.warn('[Scryfall] Catalog unavailable:', errorMessage);
       return { contextText: null, cards: [], catalogError: errorMessage };
     }
 
     const cardNames = this.catalog.findInMessage(message).slice(0, MAX_CARDS);
-    console.log('[Scryfall] Cards matched from catalog:', cardNames);
 
     if (cardNames.length === 0) return { contextText: null, cards: [] };
 
@@ -52,11 +50,9 @@ class ScryfallProvider extends BaseProvider {
     try {
       const url = `${SCRYFALL_BASE}/cards/named?exact=${encodeURIComponent(name)}`;
       const res = await fetch(url, { headers: { 'User-Agent': 'MTGHelper/1.0' } });
-      console.log(`[Scryfall] "${name}" -> HTTP ${res.status}`);
       if (!res.ok) return null;
       return await res.json();
-    } catch (err) {
-      console.error(`[Scryfall] fetch error for "${name}":`, err.message);
+    } catch {
       return null;
     }
   }

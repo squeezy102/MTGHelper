@@ -3,8 +3,8 @@ import { marked } from 'marked';
 marked.setOptions({ breaks: true });
 
 class ChatViewController {
-  constructor(cardPanelController) {
-    this.cardPanelController = cardPanelController;
+  constructor(onCardsFound) {
+    this.onCardsFound = onCardsFound;
     this.conversationHistory = [];
     this.chatHistory = document.getElementById('chatHistory');
     this.chatInput = document.getElementById('chatInput');
@@ -39,14 +39,13 @@ class ChatViewController {
 
     try {
       const result = await window.mtgHelper.sendMessage(message, this.conversationHistory);
-      console.log('[Chat] IPC result:', result);
       const { response, cards } = result;
       this.conversationHistory.push({ role: 'user', content: message });
       this.conversationHistory.push({ role: 'assistant', content: response });
       this.appendMessage('assistant', response);
 
-      if (cards && cards.length > 0) {
-        this.cardPanelController.addCards(cards);
+      if (cards && cards.length > 0 && this.onCardsFound) {
+        this.onCardsFound(cards);
       }
     } catch (error) {
       this.appendMessage('error', 'Something went wrong. Is Ollama running?');

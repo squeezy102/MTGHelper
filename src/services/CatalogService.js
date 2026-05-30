@@ -29,13 +29,11 @@ class CatalogService {
       }
 
       this.status = 'ready';
-      console.log(`[Catalog] Loaded ${this.nameMap.size} card names.`);
     } catch (err) {
       this.status = 'failed';
       this.errorMessage = err.name === 'AbortError'
         ? 'Scryfall catalog request timed out. Card recognition will be unavailable until the app is restarted.'
         : `Failed to load card catalog: ${err.message}. Card recognition will be unavailable until the app is restarted.`;
-      console.error('[Catalog]', this.errorMessage);
     }
   }
 
@@ -58,7 +56,17 @@ class CatalogService {
       }
     }
 
-    return [...found];
+    // Longest match wins - drop any match that is a substring of a more
+    // specific match (e.g. "Meathook Massacre" when "Meathook Massacre II"
+    // was also found).
+    const names = [...found];
+    return names.filter(name => {
+      const n = this._normalize(name);
+      return !names.some(other => {
+        const o = this._normalize(other);
+        return o !== n && o.includes(n);
+      });
+    });
   }
 
   getStatus() {

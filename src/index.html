@@ -6,11 +6,36 @@
     <link rel="stylesheet" href="styles/main.css">
   </head>
   <body>
-    <div class="app-container">
-      <div class="main-content">
+    <div class="app-shell" id="appShell">
 
-        <div class="left-panel">
-          <div class="app-header" id="appHeader"></div>
+      <nav class="app-nav" id="appNav">
+        <span class="app-nav-title">MTG Helper</span>
+        <div class="nav-tabs" id="navTabs">
+          <div class="nav-tab nav-tab--active" data-tab="assistant">
+            <span class="nav-tab-label">Assistant</span>
+            <button class="nav-tab-popout" data-tab="assistant" title="Pop out">&#x2197;</button>
+          </div>
+          <div class="nav-tab" data-tab="lookup">
+            <span class="nav-tab-label">Lookup</span>
+            <button class="nav-tab-popout" data-tab="lookup" title="Pop out">&#x2197;</button>
+          </div>
+          <div class="nav-tab" data-tab="deckbuilder">
+            <span class="nav-tab-label">Deck Builder</span>
+            <button class="nav-tab-popout" data-tab="deckbuilder" title="Pop out">&#x2197;</button>
+          </div>
+        </div>
+      </nav>
+
+      <div class="tab-panels">
+
+        <!-- Assistant Tab -->
+        <div class="tab-panel tab-panel--active" id="panel-assistant">
+          <div class="assistant-toolbar">
+            <label class="feed-toggle" title="When enabled, cards mentioned in this conversation will be sent to the Lookup tab.">
+              <input type="checkbox" id="feedToggle" />
+              <span>Write to Lookup</span>
+            </label>
+          </div>
           <div class="chat-history" id="chatHistory"></div>
           <div class="chat-input-bar">
             <input type="text" id="chatInput" placeholder="Ask anything..." />
@@ -18,21 +43,28 @@
           </div>
         </div>
 
-        <div class="divider"></div>
-
-        <div class="right-panel">
+        <!-- Lookup Tab -->
+        <div class="tab-panel" id="panel-lookup">
           <div class="card-tabs-bar" id="cardTabsBar">
             <div class="card-tabs-empty">No cards loaded</div>
           </div>
           <div class="card-image-section" id="cardImageSection">
-            <div class="card-image-missing">Cards mentioned in the conversation will appear here.</div>
+            <div class="card-image-missing">No card selected.</div>
           </div>
           <div class="card-info-section" id="cardInfoSection"></div>
           <div class="card-meta-section" id="cardMetaSection"></div>
         </div>
 
+        <!-- Deck Builder Tab -->
+        <div class="tab-panel" id="panel-deckbuilder">
+          <div class="coming-soon">
+            <div class="coming-soon-title">Deck Builder</div>
+            <div class="coming-soon-sub">Coming in a future update.</div>
+          </div>
+        </div>
+
       </div>
     </div>
+    <script src="../dist/renderer.bundle.js"></script>
   </body>
-  <script src="../dist/renderer.bundle.js"></script>
 </html>

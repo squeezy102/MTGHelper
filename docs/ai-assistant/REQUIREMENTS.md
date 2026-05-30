@@ -13,7 +13,7 @@ The right panel is divided into three fixed sections stacked vertically:
 2. **Card Info** (middle) - all text printed on the physical card: name, mana cost,
    type line, oracle text, flavor text, power/toughness, artist, set
 3. **Card Meta** (bottom) - external/contextual data: legality across formats,
-   MTGA availability, pricing, and official rulings
+   MTGA availability, pricing (USD only), and official rulings
 
 A **tab bar** sits at the top of the right panel. Each tab represents one card
 currently in the panel. Clicking a tab switches all three sections to show that
@@ -61,11 +61,12 @@ area of functionality.
 
 ### Tab Behavior
 - Only one tab is active/visible at a time within a window
-- Each tab has a pop-out button that opens it in its own independent window
-- A popped-out tab is removed from the main window's tab bar and lives in its
-  own window until closed, at which point it returns to the main window
+- Each tab has a pop-out button (↗) that opens it in its own independent window
+- A popped-out tab is grayed out in the main window's nav bar
+- When a pop-out window is closed, the tab returns to the main window
 - Any tab can be popped out independently - the user could have all three in
   separate windows simultaneously
+- Pop-out windows show only their assigned view with no nav bar
 
 ---
 
@@ -80,13 +81,21 @@ A dedicated card reference view, replacing the right-panel card display from REQ
 - Large batch imports (e.g. a full deck list) are fetched with rate limiting to
   respect the Scryfall API
 
-### Feed from Chat
-- A toggle in the Lookup tab controls whether cards mentioned in the Assistant tab
-  automatically appear in Lookup
-- Default: **off** - Lookup is idle unless the user is actively viewing it or has
-  enabled the feed
-- When off, no Scryfall lookups are triggered from chat - no wasted API calls
-- Tooltip on the toggle explains what it does
+### Write to Lookup (Feed Toggle)
+- A **"Write to Lookup"** checkbox lives in the Assistant tab toolbar
+- Default: **off**
+- When on, cards identified in the Assistant conversation are automatically sent
+  to the Lookup tab (whether docked or popped out)
+- When off, the Lookup tab is idle and no Scryfall lookups are triggered from chat
+- Tooltip explains what the toggle does
+
+### Card Deduplication and Disambiguation
+- The Lookup tab never displays two cards for the same keyword/mention
+- When a message contains a name that matches multiple cards of varying specificity
+  (e.g. "Meathook Massacre II" also contains "Meathook Massacre"), only the most
+  specific (longest) match is shown - **longest match wins**
+- A card already loaded in the Lookup tab is not added again if mentioned again
+  in a subsequent message
 
 ---
 
@@ -125,9 +134,9 @@ A full deck management and analysis tool.
 A settings/config dialogue accessible from the app.
 
 ### Planned Settings (to be detailed when built)
-- **Feed Lookup from Chat** - toggle controlling whether Assistant chat populates
-  the Lookup tab with identified cards (also surfaced as a toggle in the Lookup tab)
-- **Inject card context into prompts** - toggle controlling whether Scryfall card
-  data is injected into LLM prompts when cards are mentioned; when off the Assistant
-  relies on its training knowledge only. Tooltip notes this affects token/API usage.
+- **Write to Lookup** - same toggle as in the Assistant toolbar, surfaced here
+  for discoverability
+- **Inject card context into prompts** - controls whether Scryfall card data is
+  injected into LLM prompts when cards are mentioned; when off the Assistant relies
+  on its training knowledge only. Tooltip notes this affects token/API usage.
 - Additional settings TBD

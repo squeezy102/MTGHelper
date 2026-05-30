@@ -1,7 +1,5 @@
-import CardPanelController from './controllers/CardPanelController.js';
-import ChatViewController from './controllers/ChatViewController.js';
+import AppViewController from './controllers/AppViewController.js';
 
 window.addEventListener('DOMContentLoaded', () => {
-  const cardPanelController = new CardPanelController();
-  new ChatViewController(cardPanelController);
+  new AppViewController();
 });
