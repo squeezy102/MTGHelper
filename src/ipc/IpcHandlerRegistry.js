@@ -19,6 +19,10 @@ class IpcHandlerRegistry {
     ipcMain.handle('get-catalog-status', () => {
       return this.catalog.getStatus();
     });
+
+    ipcMain.handle('lookup-cards', async (event, query) => {
+      return await this.orchestrator.lookupCards(query);
+    });
   }
 }
 

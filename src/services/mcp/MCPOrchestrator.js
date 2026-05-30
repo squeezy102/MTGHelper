@@ -12,7 +12,14 @@ const INTENT_KEYWORDS = {
 
 class MCPOrchestrator {
   constructor(catalog) {
+    this.catalog = catalog;
     this.providers = [new ScryfallProvider(catalog)];
+  }
+
+  async lookupCards(query) {
+    const cardNames = this.catalog.findInMessage(query).slice(0, 5);
+    if (cardNames.length === 0) return [];
+    return this.providers[0].fetchCards(cardNames);
   }
 
   async getResult(message) {

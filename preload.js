@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('mtgHelper', {
   popoutTab:            (tabName)          => ipcRenderer.invoke('popout-tab', tabName),
   getViewAssignment:    ()                 => ipcRenderer.invoke('get-view-assignment'),
   relayCardsToLookup:   (payload)          => ipcRenderer.invoke('relay-cards-to-lookup', payload),
+  lookupCards:          (query)            => ipcRenderer.invoke('lookup-cards', query),
   onTabReturned:        (cb) => ipcRenderer.on('tab-returned',       (_, tabName) => cb(tabName)),
   onCardsFromChat:      (cb) => ipcRenderer.on('cards-from-chat',    (_, payload) => cb(payload)),
   onSendCurrentCards:   (cb) => ipcRenderer.on('send-current-cards', ()           => cb()),

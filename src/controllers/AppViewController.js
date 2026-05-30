@@ -69,6 +69,11 @@ class AppViewController {
     document.querySelectorAll('.tab-panel').forEach(p => {
       p.classList.toggle('tab-panel--active', p.id === `panel-${tabName}`);
     });
+
+    if (tabName === 'lookup') {
+      const input = document.getElementById('lookupInput');
+      if (input) setTimeout(() => input.focus(), 0);
+    }
   }
 
   async _popoutTab(tabName) {
@@ -128,6 +133,8 @@ class AppViewController {
     if (viewName === 'lookup') {
       this.lookupView = new LookupViewController();
       this.lookupView.listenForRelayedCards();
+      const input = document.getElementById('lookupInput');
+      if (input) setTimeout(() => input.focus(), 0);
     } else if (viewName === 'deckbuilder') {
       this.deckBuilderView = new DeckBuilderViewController();
     } else if (viewName === 'assistant') {

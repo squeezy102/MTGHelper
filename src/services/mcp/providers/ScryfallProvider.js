@@ -18,6 +18,21 @@ class ScryfallProvider extends BaseProvider {
     return true;
   }
 
+  // Direct card fetch by known names - used by the Lookup tab search bar.
+  // Skips intent detection and context building since there's no LLM involved.
+  async fetchCards(names) {
+    const rawCards = await Promise.all(names.map(name => this._fetchCard(name)));
+    const validCards = rawCards.filter(Boolean);
+    return Promise.all(
+      validCards.map(raw => this._buildCardData(raw, {
+        isRulesQuestion: false,
+        isPricingQuestion: false,
+        isLegalityQuestion: false,
+        isArenaQuestion: false,
+      }))
+    );
+  }
+
   async getContext(message, intentFlags) {
     const { status, errorMessage } = this.catalog.getStatus();
 

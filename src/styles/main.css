@@ -281,6 +281,66 @@ body {
   color: #bbb;
 }
 
+/* ── Lookup Search Bar ── */
+
+.lookup-search-bar {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  background-color: #111;
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+
+.lookup-search-bar input {
+  flex: 1;
+  padding: 8px 12px;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-size: 0.9rem;
+}
+
+.lookup-search-bar input:focus {
+  outline: none;
+  border-color: #c89b3c;
+}
+
+#lookupInput:focus::placeholder {
+  color: transparent;
+}
+
+.lookup-search-bar button {
+  padding: 8px 16px;
+  background-color: #c89b3c;
+  border: none;
+  border-radius: 4px;
+  color: #111;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.lookup-search-bar button:hover {
+  background-color: #e0b84a;
+}
+
+.lookup-search-bar button:disabled {
+  background-color: #5a4a1e;
+  cursor: not-allowed;
+}
+
+.lookup-search-status {
+  padding: 0 12px;
+  font-size: 0.78rem;
+  color: #666;
+  min-height: 20px;
+  line-height: 20px;
+  flex-shrink: 0;
+}
+
 /* ── Card Tab Bar ── */
 
 .card-tabs-bar {
@@ -349,7 +409,7 @@ body {
 /* ── Card Sections ── */
 
 .card-image-section {
-  flex: 4;
+  flex: 5;
   background-color: #1a1a1a;
   border-bottom: 1px solid #2a2a2a;
   display: flex;
@@ -374,7 +434,7 @@ body {
 }
 
 .card-info-section {
-  flex: 3;
+  flex: 2;
   background-color: #1e1e1e;
   border-bottom: 1px solid #2a2a2a;
   padding: 12px;
@@ -411,13 +471,31 @@ body {
   background-color: #1a1a1a;
   padding: 12px;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
+  align-content: start;
   font-size: 0.82rem;
 }
 
-.meta-block { display: flex; flex-direction: column; gap: 5px; }
+.meta-block {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.meta-block--full {
+  grid-column: 1 / -1;
+}
+
+.meta-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
 .meta-label {
   font-size: 0.72rem;
@@ -455,7 +533,10 @@ body {
 
 /* ── Arena ── */
 
-.arena-status { color: #b0b0b0; }
+.arena-label { display: flex; align-items: center; gap: 6px; }
+.arena-logo { height: 32px; width: auto; }
+.arena-available   { color: #7ec87e; font-size: 1.1rem; font-weight: bold; }
+.arena-unavailable { color: #e07a7a; font-size: 1.1rem; font-weight: bold; }
 
 /* ── Rulings ── */
 

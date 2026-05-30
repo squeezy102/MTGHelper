@@ -1,8 +1,24 @@
 const MAX_CARDS = 10;
-const DISPLAYED_FORMATS = [
-  'standard', 'pioneer', 'modern', 'legacy', 'vintage',
-  'commander', 'pauper', 'historic', 'alchemy', 'explorer', 'brawl'
-];
+
+const PHYSICAL_FORMATS = {
+  standard:  'Standard',
+  pioneer:   'Pioneer',
+  modern:    'Modern',
+  legacy:    'Legacy',
+  vintage:   'Vintage',
+  commander: 'Commander',
+  pauper:    'Pauper',
+};
+
+const ARENA_FORMATS = {
+  standard:      'Standard',
+  alchemy:       'Alchemy',
+  explorer:      'Explorer',
+  historic:      'Historic',
+  historic_brawl:'Hist. Brawl',
+  brawl:         'Brawl',
+  timeless:      'Timeless',
+};
 
 class CardPanelController {
   constructor() {
@@ -132,12 +148,17 @@ class CardPanelController {
   }
 
   _renderMetaSection(card) {
-    const legality = this._legalityHtml(card.legalities);
-    const pricing  = this._pricingHtml(card.prices);
-    const arena    = this._arenaHtml(card);
-    const rulings  = this._rulingsHtml(card.rulings);
+    const parts = [
+      this._pricingHtml(card.prices),
+      this._physicalLegalityHtml(card.legalities),
+      this._arenaAvailabilityHtml(card),
+      this._arenaLegalityHtml(card),
+      this._rulingsHtml(card.rulings),
+    ].filter(Boolean);
 
-    this.metaSection.innerHTML = legality + pricing + arena + rulings || '<div class="meta-empty">No additional data.</div>';
+    this.metaSection.innerHTML = parts.length
+      ? parts.join('')
+      : '<div class="meta-empty">No additional data.</div>';
   }
 
   _clearPanels() {
@@ -146,13 +167,50 @@ class CardPanelController {
     this.metaSection.innerHTML = '';
   }
 
-  _legalityHtml(legalities) {
+  _physicalLegalityHtml(legalities) {
     if (!legalities) return '';
-    const badges = DISPLAYED_FORMATS
-      .filter(f => legalities[f] && legalities[f] !== 'not_available')
-      .map(f => `<span class="legality-badge legality--${legalities[f]}">${f}</span>`)
+    const badges = Object.entries(PHYSICAL_FORMATS)
+      .filter(([key]) => legalities[key] && legalities[key] !== 'not_available')
+      .map(([key, label]) => `<span class="legality-badge legality--${legalities[key]}">${label}</span>`)
       .join('');
-    return badges ? `<div class="meta-block"><div class="meta-label">Legality</div><div class="legality-badges">${badges}</div></div>` : '';
+    return badges
+      ? `<div class="meta-block"><div class="meta-label">Physical Legality</div><div class="legality-badges">${badges}</div></div>`
+      : '';
+  }
+
+  _arenaAvailabilityHtml(card) {
+    const inArena = card.arenaId !== null;
+    const hasArenaData = Object.keys(ARENA_FORMATS).some(
+      f => card.legalities?.[f] && card.legalities[f] !== 'not_available'
+    );
+    if (!inArena && !hasArenaData) return '';
+
+    const symbol   = inArena ? '&#x2713;' : '&#x2717;';
+    const cssClass = inArena ? 'arena-available' : 'arena-unavailable';
+    const text     = inArena ? 'Available on MTG Arena' : 'Not available on MTG Arena';
+    return `<div class="meta-block">
+      <div class="meta-label arena-label">
+        <img class="arena-logo" src="../resources/images/MTG_Arena_Logo.png" alt="MTG Arena" />
+        Availability
+      </div>
+      <div class="meta-inline"><span class="${cssClass}">${symbol}</span><span>${text}</span></div>
+    </div>`;
+  }
+
+  _arenaLegalityHtml(card) {
+    const badges = Object.entries(ARENA_FORMATS)
+      .filter(([key]) => card.legalities?.[key] && card.legalities[key] !== 'not_available')
+      .map(([key, label]) => `<span class="legality-badge legality--${card.legalities[key]}">${label}</span>`)
+      .join('');
+    return badges
+      ? `<div class="meta-block">
+          <div class="meta-label arena-label">
+            <img class="arena-logo" src="../resources/images/MTG_Arena_Logo.png" alt="MTG Arena" />
+            Legality
+          </div>
+          <div class="legality-badges">${badges}</div>
+        </div>`
+      : '';
   }
 
   _pricingHtml(prices) {
@@ -160,21 +218,16 @@ class CardPanelController {
     const rows = [];
     if (prices.usd)      rows.push(`<div class="price-row"><span>Normal</span><span>$${prices.usd}</span></div>`);
     if (prices.usd_foil) rows.push(`<div class="price-row"><span>Foil</span><span>$${prices.usd_foil}</span></div>`);
-    return rows.length ? `<div class="meta-block"><div class="meta-label">Price (TCGPlayer)</div>${rows.join('')}</div>` : '';
-  }
-
-  _arenaHtml(card) {
-    const inArena = card.arenaId !== null;
-    const arenaLegality = card.legalities?.historic || card.legalities?.alchemy || card.legalities?.standard;
-    if (!inArena && !arenaLegality) return '';
-    const status = inArena ? 'Available on MTG Arena' : 'Not on MTG Arena';
-    return `<div class="meta-block"><div class="meta-label">MTG Arena</div><div class="arena-status">${status}</div></div>`;
+    const content = rows.length
+      ? rows.join('')
+      : `<div class="meta-empty">No pricing data available</div>`;
+    return `<div class="meta-block"><div class="meta-label">Price (TCGPlayer)</div>${content}</div>`;
   }
 
   _rulingsHtml(rulings) {
     if (!rulings || rulings.length === 0) return '';
     const items = rulings.map(r => `<li>${this._esc(r)}</li>`).join('');
-    return `<div class="meta-block"><div class="meta-label">Rulings</div><ul class="rulings-list">${items}</ul></div>`;
+    return `<div class="meta-block meta-block--full"><div class="meta-label">Rulings</div><ul class="rulings-list">${items}</ul></div>`;
   }
 
   _esc(str) {
