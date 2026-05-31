@@ -5,8 +5,10 @@ Running notes for AI assistant continuity across sessions.
 ## Repository State
 
 - **Branch:** `dev` (all active development; merge to `master` at stable milestones only)
-- **Last commit:** `9e69641` - "changing sessions" (LLM model switch to qwen2.5:14b)
-- **Working tree:** Clean
+- **Last commit:** `7ac2aaf` - "Add Claude API support, logging service, and DI refactor"
+- **Uncommitted changes:** Source disclosure UX pass (message header, `contextUsed` IPC flag,
+  system prompt cleanup). Modified: `ChatViewController.js`, `IpcHandlerRegistry.js`,
+  `ClaudeService.js`, `OllamaService.js`, `main.css`.
 
 ## Current App State
 
@@ -21,6 +23,12 @@ Phase 1 is complete. Phase 2 (Lookup Tab) is in progress and partially built.
 - Card panel: tab bar + 3-section display (image, card info, card meta)
 - Card state persists when Lookup is popped out (main window pushes state on did-finish-load)
 - USD-only pricing in card meta section
+- **LLM source header** on every assistant message: muted chip showing active provider name
+  (e.g. "Claude Haiku"), plus a gold `+ MTGHelper` label when KB context was injected.
+  Implemented in `ChatViewController._buildSourceHeader(contextUsed)`. The `contextUsed`
+  boolean comes from `IpcHandlerRegistry` (`context !== null` after orchestration).
+- **Active LLM label** in the assistant toolbar (top-right, italic) populated at init via
+  `getLlmInfo()` IPC. Updates automatically if provider changes at next restart.
 
 ### Phase 2 features (committed)
 - **Manual card search** in Lookup tab: search bar with Enter key support, loading state,
@@ -140,7 +148,7 @@ MTGHelper/
 
 | Method | Direction | Purpose |
 |---|---|---|
-| `sendMessage(message, history)` | renderer → main | Send chat message; returns `{ response, cards }` |
+| `sendMessage(message, history)` | renderer → main | Send chat message; returns `{ response, cards, contextUsed: boolean }` |
 | `getCatalogStatus()` | renderer → main | Check Scryfall catalog load state |
 | `popoutTab(tabName)` | renderer → main | Open a tab in its own window |
 | `getViewAssignment()` | renderer → main | Pop-out window asks which tab it owns |

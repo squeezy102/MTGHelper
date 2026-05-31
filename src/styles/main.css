@@ -220,6 +220,44 @@ body {
   align-self: flex-start;
 }
 
+.message-source {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #252525;
+}
+
+.source-llm {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  color: #4a4a4a;
+}
+
+.source-llm-icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  background-color: #2a2a2a;
+  color: #666;
+  font-size: 0.6rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.source-mtghelper {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #c89b3c;
+  letter-spacing: 0.03em;
+}
+
 .chat-message--assistant p { margin-bottom: 8px; }
 .chat-message--assistant p:last-child { margin-bottom: 0; }
 .chat-message--assistant ul,

@@ -14,7 +14,7 @@ class IpcHandlerRegistry {
       log.info('Chat', `User message (history: ${history.length} msg(s)): "${preview}"`);
       const { context, cards } = await this.orchestrator.getResult(message);
       const response = await this.llmService.sendMessage(message, history, context);
-      return { response, cards };
+      return { response, cards, contextUsed: context !== null };
     });
 
     ipcMain.handle('get-catalog-status', () => {
