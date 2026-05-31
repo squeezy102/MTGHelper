@@ -1,0 +1,76 @@
+{
+  "version": "1.0",
+  "lastRefreshed": null,
+  "topics": [
+    {
+      "id": "glossary",
+      "file": "mtg-glossary.md",
+      "description": "Core MTG terminology, zones, keywords, and community shorthand",
+      "keywords": [],
+      "alwaysInject": true,
+      "source": "official",
+      "sourceDocs": ["comprehensive-rules.txt", "scryfall-symbology.json"],
+      "lastBuilt": null
+    },
+    {
+      "id": "rules-and-mechanics",
+      "file": "mtg-rules-and-mechanics.md",
+      "description": "Turn structure, the stack, combat, mana, triggered/activated/static abilities",
+      "keywords": [
+        "stack", "priority", "combat", "trigger", "triggered", "mana", "upkeep",
+        "tap", "untap", "resolve", "cast", "ability", "turn", "phase", "step",
+        "how does", "when does", "summoning sickness", "replacement effect",
+        "state-based", "first strike", "double strike", "mulligan"
+      ],
+      "alwaysInject": false,
+      "source": "official",
+      "sourceDocs": ["comprehensive-rules.txt"],
+      "lastBuilt": null
+    },
+    {
+      "id": "card-types",
+      "file": "mtg-card-types-and-interactions.md",
+      "description": "Card types, subtypes, and key interaction patterns",
+      "keywords": [
+        "artifact", "enchantment", "planeswalker", "creature", "instant", "sorcery",
+        "equipment", "aura", "saga", "class", "battle", "siege", "token",
+        "etb", "enters the battlefield", "death trigger", "sacrifice", "removal",
+        "destroy", "exile", "bounce", "double-faced", "dfc", "mdfc", "kindred",
+        "tribal", "legendary", "supertype", "subtype", "type line"
+      ],
+      "alwaysInject": false,
+      "source": "official",
+      "sourceDocs": ["comprehensive-rules.txt", "scryfall-catalog-creature-types.json", "scryfall-catalog-card-types.json"],
+      "lastBuilt": null
+    },
+    {
+      "id": "formats",
+      "file": "mtg-formats-and-legality.md",
+      "description": "MTGA formats, rotation schedule, legality rules, ban/restricted lists",
+      "keywords": [
+        "format", "standard", "historic", "pioneer", "alchemy", "timeless", "brawl",
+        "draft", "sealed", "limited", "legal", "illegal", "banned", "restricted",
+        "rotate", "rotation", "sideboard", "bo1", "bo3", "best of", "color identity",
+        "singleton", "constructed", "explorer", "eternal", "non-rotating"
+      ],
+      "alwaysInject": false,
+      "source": "official",
+      "sourceDocs": ["scryfall-sets.json", "comprehensive-rules.txt"],
+      "lastBuilt": null
+    },
+    {
+      "id": "deck-building",
+      "file": "mtg-deck-building-strategy.md",
+      "description": "Deck archetypes, mana curve, card advantage, sideboarding - USER MAINTAINED",
+      "keywords": [
+        "deck", "build", "building", "curve", "mana curve", "aggro", "control",
+        "midrange", "combo", "ramp", "archetype", "sideboard", "lands", "mana base",
+        "threats", "answers", "win condition", "card advantage", "tempo"
+      ],
+      "alwaysInject": false,
+      "source": "user",
+      "sourceDocs": [],
+      "lastBuilt": null
+    }
+  ]
+}

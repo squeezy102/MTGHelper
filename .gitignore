@@ -1,2 +1,12 @@
 node_modules/
 node_modules/electron/dist/
+dist/
+logs/
+
+# Environment variable files - never commit API keys
+.env
+.env.*
+*.env
+
+# Knowledge base raw source documents (fetched at runtime by ContentManagerService)
+resources/knowledge/sources/
