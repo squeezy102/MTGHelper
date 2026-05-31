@@ -49,6 +49,12 @@ Preferences and working style guidance for AI assistant sessions on this project
 
 ## Documentation
 
+- Documentation is paramount on this project. It is the primary mechanism for
+  continuity across sessions, contributors, and AI assistants. Treat it as a
+  first-class deliverable, not an afterthought.
+- Keep documentation as current and accurate as possible throughout every session.
+  Do not batch documentation to the end - update it as decisions are made and
+  changes are implemented.
 - Proactively flag when something discussed should be written to documentation
 - Ask before writing - identify which document it belongs in and confirm with the user
 - If a new document seems warranted, suggest it and explain why before creating it
@@ -56,6 +62,20 @@ Preferences and working style guidance for AI assistant sessions on this project
 - Proactively call out technical foresights, implementation nuances, and
   potential pitfalls even when they aren't the current focus - these are
   explicitly valued. Address them when relevant, not when asked.
+
+## README Maintenance
+
+- `README.md` in the repo root is the public-facing onboarding document - it is the
+  first thing a new contributor reads on GitHub
+- The README must be kept current alongside all other documentation
+- Any change to the following must trigger a README update in the same session:
+  - Setup steps (npm commands, install instructions, prerequisites)
+  - LLM provider options, model names, or configuration method
+  - Required or recommended tools
+  - Contribution workflow or branch strategy
+  - Environment variable names or how credentials are configured
+- Do not wait to be asked - update the README as part of the same change that
+  prompted it, the same way CONTEXT.md or DECISIONS.md would be updated
 
 ## App Restart Protocol
 

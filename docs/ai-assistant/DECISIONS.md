@@ -111,8 +111,8 @@ User message
   -> IPC returns { response, cards } to renderer
   -> ChatViewController: render markdown response, calls onCardsFound(cards)
   -> AppViewController._onCardsFound()
-       -> if feedEnabled + lookup docked: LookupViewController.receiveCards()
-       -> if feedEnabled + lookup popped out: relayCardsToLookup IPC
+       -> if feedEnabled + Card Lookup docked: LookupViewController.receiveCards()
+       -> if feedEnabled + Card Lookup popped out: relayCardsToLookup IPC
   -> CardPanelController.addCards(): update tab bar + 3-section display
 ```
 
@@ -140,3 +140,15 @@ User clicks pop-out button on Lookup tab
 - master - stable milestones only
 - dev - active development branch
 - Feature branches as needed
+
+---
+
+## Product / UX
+
+| Decision | Why |
+|---|---|
+| Tab naming: MTG Wizard, Card Lookup, Workshop | Names reflect intent, not implementation. MTG Wizard signals a conversational companion you ask things. Card Lookup is self-descriptive - it's a lookup tool, nothing more. Workshop evokes a workspace where you and an AI collaborator build side by side. |
+| Card Lookup scope: no LLM card output | Card Lookup is a reference tool only. LLM response card surfacing belongs in the Workshop where the LLM is an active participant. Feeding AI output into Card Lookup would blur its purpose. |
+| Write to Lookup feeds user-mentioned cards only | The "Write to Lookup" toggle in MTG Wizard carries cards the user mentioned - not the LLM's output. The LLM's card suggestions are the Workshop's domain. |
+| REQ-009 scoped to Workshop only | LLM response card matching is only meaningful where both sides of the conversation have dedicated card areas. The Workshop split-pane provides that; MTG Wizard and Card Lookup do not. |
+| Workshop AI has its own working deck area | The Workshop is designed as a side-by-side collaboration, not a chat window with a card panel. The AI maintains its own proposed deck that the user can inspect, approve from, or copy wholesale - like sitting across from a deckbuilder who is also building in real time. |

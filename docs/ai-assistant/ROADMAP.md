@@ -11,27 +11,25 @@ getting the scaffolding right so everything that follows has a solid home.
 
 - Replace the hardcoded left/right split with a tabbed app shell
 - Implement pop-out window functionality
-- Migrate the existing Assistant chat into the Assistant tab
-- Migrate the existing card panel into the Lookup tab (as-is, no new Lookup features yet)
+- Migrate the existing Assistant chat into the MTG Wizard tab
+- Migrate the existing card panel into the Card Lookup tab (as-is, no new Lookup features yet)
 - Inter-tab/inter-window communication via IPC event bus
-- Feed-from-chat toggle wired up (Lookup tab)
+- Feed-from-chat toggle wired up (Card Lookup tab)
 
 **Requirements covered:** REQ-003, REQ-004 (partial)
 
 ---
 
-## Phase 2 - Lookup Tab
+## Phase 2 - Card Lookup Tab
 
-Enhance the Lookup tab as a standalone manual card reference tool.
+Enhance the Card Lookup tab as a standalone manual card reference tool.
 
 - Manual card search (search bar, results list)
 - Full card detail view (image, info, meta - same three sections)
 - Batch import from a deck list (paste a list, fetch all cards with rate limiting)
 - No cap on card count
-- LLM response card matching (REQ-009) - run catalog matching on AI responses,
-  feed both user and LLM card finds to Lookup when "Write to Lookup" is on
 
-**Requirements covered:** REQ-004 (complete), REQ-009
+**Requirements covered:** REQ-004 (complete)
 
 ---
 
@@ -53,20 +51,22 @@ in verified, source-traceable facts.
 
 ---
 
-## Phase 3a - Deck Builder: Conversational Layer
+## Phase 3a - Workshop: Card and Conversation Layer
 
-Build the AI-assisted conversational half of the Deck Builder tab.
+Build the split-pane collaborative workspace.
 
-- Split-pane layout: user side (input + cards) / LLM side (response + cards)
-- Card matching on both sides of conversation (REQ-009 routing)
-- Cards addable to a basic deck list from either pane
+- Split-pane layout: user side (input, cards, deck area) / AI side (responses, suggested cards, AI working deck)
+- Card matching on both sides of conversation per REQ-009
+- LLM maintains a working deck proposal the user can approve from or copy
+- AI can generate MTGA-compatible import strings
+- Cards addable to user deck from either pane
 - Conversational context scoped to deck building (system prompt tuned)
 
-**Requirements covered:** REQ-005 (partial - conversational layer)
+**Requirements covered:** REQ-005 (partial - conversational layer), REQ-009
 
 ---
 
-## Phase 3b - Deck Builder: Management Tools
+## Phase 3b - Workshop: Deck Management Tools
 
 Build the deck management and analysis tools on top of the Phase 3a foundation.
 

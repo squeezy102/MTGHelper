@@ -54,12 +54,13 @@ than a raw string dump.
 The app is structured around three top-level tabs, each with a distinct purpose.
 
 ### Tab Purposes
-1. **Assistant** - general MTG conversation with an AI companion; cards surface
-   as a natural side effect of discussion but the experience is conversational
-2. **Lookup** - pure manual card reference; search and browse cards with full
-   detail; no AI involvement in this tab
-3. **Deck Builder** - AI-assisted, intent-driven deck building; conversational
-   experience purpose-built for discovering, discussing, and assembling a deck
+1. **MTG Wizard** - conversational MTG companion; ask questions, discuss rules,
+   explore strategy and meta; the experience is discussion-first with no card
+   panel or deck management
+2. **Card Lookup** - pure manual card reference; search and browse cards with
+   full detail; no AI involvement in this tab
+3. **Workshop** - split-pane collaborative workspace; card exploration and
+   deck building with an AI partner; both sides are actionable simultaneously
 
 ### Tab Behavior
 - Only one tab is active/visible at a time within a window
@@ -72,7 +73,7 @@ The app is structured around three top-level tabs, each with a distinct purpose.
 
 ---
 
-## REQ-004: Lookup Tab
+## REQ-004: Card Lookup Tab
 
 A standalone card reference tool. No AI or conversational elements - the user
 searches for cards directly and browses their data.
@@ -85,12 +86,13 @@ searches for cards directly and browses their data.
   respect the Scryfall API
 
 ### Write to Lookup (Feed Toggle)
-- A **"Write to Lookup"** checkbox lives in the Assistant tab toolbar
+- A **"Write to Lookup"** toggle lives in the MTG Wizard tab toolbar
 - Default: **off**
-- When on, cards identified in the Assistant conversation (both from user
-  messages and LLM responses, per REQ-009) are automatically sent to the
-  Lookup tab
-- When off, the Lookup tab receives no cards from the Assistant
+- When on, cards identified in the user's messages in MTG Wizard are
+  automatically sent to the Card Lookup tab
+- LLM response cards are never fed to Card Lookup - that functionality
+  belongs in the Workshop tab
+- When off, Card Lookup receives no cards from MTG Wizard
 - Tooltip explains what the toggle does
 
 ### Card Deduplication and Disambiguation
@@ -101,43 +103,45 @@ searches for cards directly and browses their data.
 
 ---
 
-## REQ-005: Deck Builder Tab
+## REQ-005: Workshop Tab
 
-An AI-assisted, intent-driven deck building experience combined with full deck
-management tools. This tab is purpose-built for the focused task of assembling
-and analyzing a deck with an AI companion.
+A collaborative, split-pane workspace for card exploration and deck building
+with an AI partner. The experience is modeled after sitting across a table from
+a master deckbuilder - both sides are visible and actionable simultaneously.
 
-### Conversational Layout
+### Layout
 The tab uses a split-pane design:
-- **Left pane** - user input and the cards surfaced from user messages
-- **Right pane** - LLM responses and the cards surfaced from those responses
-
-This makes both sides of the conversation actionable simultaneously: the user
-can see what cards their own queries triggered alongside what cards the AI is
-suggesting, without switching context.
+- **Left pane (Player side)** - user's input and conversation, cards the user
+  is exploring or has proposed, and the user's active deck project (card list,
+  counts, mana curve, creature/spell ratio, land ratios)
+- **Right pane (AI side)** - LLM responses, cards the AI is suggesting, and
+  the AI's working deck proposal
 
 ### Card Surfacing
-- Card matching runs on both sides of the conversation (user input and LLM
-  response) per REQ-009
+- Card matching runs on both sides of the conversation per REQ-009
 - Cards found in the user's message populate the left card area
 - Cards found in the LLM's response populate the right card area
 - Both use the full card detail panel (image, info, meta)
 
-### Deck List
-- A persistent deck list panel tracks cards added to the deck
-- Cards can be added from either the left or right card area
-- Displays individual card counts and total deck count
-- Cards can be removed and quantities adjusted
+### AI Working Deck
+The LLM maintains its own working deck proposal during the session. The user can:
+- View the AI's working deck at any time
+- Approve individual card suggestions from the AI's area into their own deck
+- Dismiss suggestions they don't want
+- Copy the AI's full working deck into their own deck area
 
 ### Import / Export
-- Import a deck list from standard text formats (MTGA export format, plain text)
-- Export in MTGA-compatible format
+- The AI can generate MTGA-compatible import strings at any time for the user to copy
+- User can import a deck list from standard text formats (MTGA export, plain text)
+- User can export their deck in MTGA-compatible format
 
-### Analysis Panel
+### User's Deck Area
+Tracks the user's active deck project:
+- Card list with individual counts and total deck count
 - Mana curve visualization (bar chart by converted mana cost)
 - Creature vs. non-creature spell breakdown
 - Color distribution / pip count
-- Additional breakdowns TBD
+- Land ratio
 
 ### MTGA Library
 - User can store their personal MTGA card collection (owned cards)
@@ -148,9 +152,8 @@ suggesting, without switching context.
 - User can save and load named custom decks locally
 - Deck data persists between sessions
 
-> **Note:** Due to the expanded scope of this tab, Phase 3 in the roadmap
-> may be split into two sub-phases: the conversational layer first, then
-> deck management tools. See ROADMAP.md.
+> **Note:** Phase 3 is split into two sub-phases: the conversational and card
+> layer first (3a), then deck management tools (3b). See ROADMAP.md.
 
 ---
 
@@ -227,25 +230,28 @@ The application must support multiple LLM backends, selectable by the user.
 
 ## REQ-009: LLM Response Card Matching
 
-Card name detection must run on LLM responses in addition to user input.
-Currently card matching only runs on the user's message before the LLM is
-called; this extends it to the return trip.
+Card name detection runs on LLM responses in the Workshop tab in addition to
+user input. This is where bidirectional card surfacing lives - both sides of
+the split pane are populated from their respective sides of the conversation.
 
 ### Behavior
-- After the LLM response is received, CatalogService runs the same
-  findInMessage() pass against the response text
-- Cards found in the LLM response are returned alongside any cards found in
-  the user's message, but tagged by source (user vs. LLM)
-- The source tag drives routing in REQ-005's split-pane Deck Builder layout
-- In the Assistant tab, both sets of cards are treated the same for the
-  purpose of "Write to Lookup"
+- After the LLM response is received in the Workshop tab, CatalogService runs
+  the same findInMessage() pass against the response text
+- Cards found in the LLM response populate the right (AI) side of the Workshop panel
+- Cards found in the user's message populate the left (user) side of the Workshop panel
+- Cards are tagged by source (user vs. LLM) to drive the split-pane routing
+
+### Scope
+- LLM response card matching applies to the Workshop tab only
+- The MTG Wizard tab does not surface cards from LLM responses
+- Card Lookup receives cards only from user-initiated searches or from the
+  "Write to Lookup" feed in MTG Wizard (user-mentioned cards only, never LLM output)
 
 ### Toggle
 - A **"Match cards in responses"** toggle in Settings (REQ-006) controls this
-  behavior; default **on**
-- When off, card matching only runs on user input - reduces Scryfall API calls
-  for users who don't need the LLM response side populated
-- Tooltip notes the API call and token implications
+  behavior within the Workshop tab; default **on** (Workshop context makes the intent clear)
+- When off, card matching only runs on user input in the Workshop tab
+- Tooltip notes the Scryfall API call implications
 
 ---
 

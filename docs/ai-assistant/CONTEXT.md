@@ -5,19 +5,17 @@ Running notes for AI assistant continuity across sessions.
 ## Repository State
 
 - **Branch:** `dev` (all active development; merge to `master` at stable milestones only)
-- **Last commit:** `7ac2aaf` - "Add Claude API support, logging service, and DI refactor"
-- **Uncommitted changes:** Source disclosure UX pass (message header, `contextUsed` IPC flag,
-  system prompt cleanup). Modified: `ChatViewController.js`, `IpcHandlerRegistry.js`,
-  `ClaudeService.js`, `OllamaService.js`, `main.css`.
+- **Last commit:** `46059fe` - "Add message source header and clean up LLM disclosure UX"
+- **Uncommitted changes:** None
 
 ## Current App State
 
 Phase 1 is complete. Phase 2 (Lookup Tab) is in progress and partially built.
 
 ### Phase 1 features (committed, stable)
-- Tabbed layout: Assistant / Lookup / Deck Builder (placeholder)
+- Tabbed layout: MTG Wizard / Card Lookup / Workshop (placeholder)
 - Pop-out windows per tab; popped-out tabs grayed out in nav, restored on close
-- Assistant tab: full-width chat with markdown rendering, "Write to Lookup" toggle
+- MTG Wizard tab: full-width chat with markdown rendering, "Write to Lookup" toggle
 - Scryfall card catalog (~26k names) loaded at startup for exact local name matching
 - Longest-match deduplication: overlapping card names in a message keep only the most specific
 - Card panel: tab bar + 3-section display (image, card info, card meta)
@@ -27,11 +25,11 @@ Phase 1 is complete. Phase 2 (Lookup Tab) is in progress and partially built.
   (e.g. "Claude Haiku"), plus a gold `+ MTGHelper` label when KB context was injected.
   Implemented in `ChatViewController._buildSourceHeader(contextUsed)`. The `contextUsed`
   boolean comes from `IpcHandlerRegistry` (`context !== null` after orchestration).
-- **Active LLM label** in the assistant toolbar (top-right, italic) populated at init via
+- **Active LLM label** in the MTG Wizard toolbar (top-right, italic) populated at init via
   `getLlmInfo()` IPC. Updates automatically if provider changes at next restart.
 
 ### Phase 2 features (committed)
-- **Manual card search** in Lookup tab: search bar with Enter key support, loading state,
+- **Manual card search** in Card Lookup tab: search bar with Enter key support, loading state,
   status messages. Clears input on submit, shows "No cards found." or error as appropriate.
 - **`MCPOrchestrator.lookupCards(query)`** - direct name-based fetch bypassing intent
   detection and LLM context building; used by the Lookup search bar
@@ -44,13 +42,13 @@ Phase 1 is complete. Phase 2 (Lookup Tab) is in progress and partially built.
   `.arena-label { display: flex; align-items: center; gap: 6px }`
 - **Meta block borders** - each `.meta-block` now has a subtle border, border-radius,
   and padding to visually separate the four cells in the meta section
-- **Lookup auto-focus** - switching to the Lookup tab automatically focuses the search input
+- **Lookup auto-focus** - switching to the Card Lookup tab automatically focuses the search input
 
 ### Phase 2 gaps (not yet built)
 - Batch import from a deck list (paste, rate-limited fetch)
-- No hard cap on Lookup cards - `MAX_CARDS = 10` constant still present in
-  `CardPanelController.js` and needs to be removed/bypassed for the Lookup tab
-- LLM response card matching (REQ-009) - card detection currently runs only on user input
+- No hard cap on Card Lookup cards - `MAX_CARDS = 10` constant still present in
+  `CardPanelController.js` and needs to be removed/bypassed for the Card Lookup tab
+- LLM response card matching (REQ-009) - scoped to Workshop tab; not yet built
 - Mana symbol rendering (REQ-007) - oracle text and mana costs display raw shorthand
   ({B}, {T}, etc.) instead of official WotC SVG icons
 
@@ -77,11 +75,11 @@ Phase 1 is complete. Phase 2 (Lookup Tab) is in progress and partially built.
   near-exact name. Acceptable for now.
 - "Write to Lookup" toggle is off by default and not persisted between sessions
   (resets on restart). Persistence is a settings/config feature (Phase 4).
-- Deck Builder tab is a placeholder - Phase 3 work.
+- Workshop tab is a placeholder - Phase 3 work.
 - Mana symbols in oracle text and mana cost fields currently render as raw
   shorthand notation ({B}, {T}, etc.). REQ-007 tracks replacement with
   official WotC SVG icons. Scryfall's card symbol endpoint is the intended source.
-- `MAX_CARDS = 10` in CardPanelController needs to be removed for Lookup tab per REQ-004.
+- `MAX_CARDS = 10` in CardPanelController needs to be removed for Card Lookup tab per REQ-004.
   When Deck Builder is built it may need its own cap logic - these should diverge.
 - **Sticky context on follow-up messages** - when a user sends a correction like "that's wrong,
   try again" with no MTG vocabulary, MessageIntentService finds no keyword matches and
@@ -93,6 +91,8 @@ Phase 1 is complete. Phase 2 (Lookup Tab) is in progress and partially built.
 
 ```
 MTGHelper/
+- README.md                         Public-facing onboarding doc; rendered on GitHub as the
+                                    repo landing page. Must be kept current - see USERPREFERENCES.md
 - main.js                           Composition root: creates and wires all services, registers
                                     IpcHandlerRegistry and WindowManager, creates main window
 - preload.js                        contextBridge IPC surface for renderer
@@ -110,12 +110,12 @@ MTGHelper/
   - styles/main.css
   - controllers/
     - AppViewController.js          Top-level shell: tab switching, pop-out coordination,
-                                    card routing between Assistant and Lookup
+                                    card routing between MTG Wizard and Card Lookup
     - ChatViewController.js         Chat UI and markdown rendering; takes onCardsFound callback
     - LookupViewController.js       Wraps CardPanelController; handles search bar and
                                     relayed cards from chat
     - CardPanelController.js        Card tab bar + 3-section display (image, info, meta)
-    - DeckBuilderViewController.js  Placeholder
+    - DeckBuilderViewController.js  Placeholder (Workshop tab - pending rename)
   - ipc/
     - IpcHandlerRegistry.js         Registers send-message, get-catalog-status, lookup-cards,
                                     get-llm-info; receives llmService and orchestrator via DI
@@ -203,11 +203,11 @@ MTGHelper/
 Foresights and potential complications to keep in mind before reaching the
 relevant phase. Remove an entry once it has been resolved or designed around.
 
-- **Phase 3a - Dual CardPanelController in Deck Builder:** The split-pane
+- **Phase 3a - Dual CardPanelController in Workshop:** The split-pane
   layout requires two independent card panels running simultaneously (one for
-  user-side cards, one for LLM-side cards). CardPanelController is already
+  user-side cards, one for AI-side cards). CardPanelController is already
   self-contained so instantiating two should be clean, but both panels will
-  need distinct DOM element IDs and the Deck Builder view will need to manage
+  need distinct DOM element IDs and the Workshop view will need to manage
   them without letting them bleed into each other.
 
 - **REQ-008 - Anthropic API key vs. Claude.ai Pro:** These are separate
