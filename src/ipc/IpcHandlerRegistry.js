@@ -1,18 +1,19 @@
 const { ipcMain } = require('electron');
-const OllamaService = require('../services/OllamaService');
-const MCPOrchestrator = require('../services/mcp/MCPOrchestrator');
+const log          = require('../services/LogService');
 
 class IpcHandlerRegistry {
-  constructor(catalog) {
-    this.catalog = catalog;
-    this.ollamaService = new OllamaService();
-    this.orchestrator = new MCPOrchestrator(catalog);
+  constructor(catalog, llmService, orchestrator) {
+    this.catalog      = catalog;
+    this.llmService   = llmService;
+    this.orchestrator = orchestrator;
   }
 
   register() {
     ipcMain.handle('send-message', async (event, message, history) => {
+      const preview = message.length > 80 ? message.slice(0, 80) + '…' : message;
+      log.info('Chat', `User message (history: ${history.length} msg(s)): "${preview}"`);
       const { context, cards } = await this.orchestrator.getResult(message);
-      const response = await this.ollamaService.sendMessage(message, history, context);
+      const response = await this.llmService.sendMessage(message, history, context);
       return { response, cards };
     });
 
@@ -23,6 +24,10 @@ class IpcHandlerRegistry {
     ipcMain.handle('lookup-cards', async (event, query) => {
       return await this.orchestrator.lookupCards(query);
     });
+
+    ipcMain.handle('get-llm-info', () => ({
+      displayName: this.llmService.displayName
+    }));
   }
 }
 

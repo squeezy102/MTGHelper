@@ -1,13 +1,11 @@
-const ScryfallProvider     = require('./providers/ScryfallProvider');
-const KnowledgeBaseService = require('../KnowledgeBaseService');
-const MessageIntentService = require('../MessageIntentService');
+const log = require('../LogService');
 
 class MCPOrchestrator {
-  constructor(catalog) {
+  constructor(catalog, providers, knowledgeBase, intentService) {
     this.catalog       = catalog;
-    this.providers     = [new ScryfallProvider(catalog)];
-    this.knowledgeBase = new KnowledgeBaseService();
-    this.intentService = new MessageIntentService();
+    this.providers     = providers;
+    this.knowledgeBase = knowledgeBase;
+    this.intentService = intentService;
   }
 
   async lookupCards(query) {
@@ -17,6 +15,7 @@ class MCPOrchestrator {
   }
 
   async getResult(message) {
+    log.info('Orchestrator', 'Building context...');
     const intent = this.intentService.analyze(message);
 
     const results = await Promise.all(
@@ -40,6 +39,12 @@ class MCPOrchestrator {
     }
 
     const context = contextParts.length > 0 ? contextParts.join('\n\n') : null;
+
+    if (context) {
+      log.info('Orchestrator', `Context ready: ${contextParts.length} section(s), ${context.length} chars, ${cards.length} card(s)`);
+    } else {
+      log.warn('Orchestrator', 'No context built - LLM will rely on training knowledge only');
+    }
 
     return { context, cards };
   }

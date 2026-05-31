@@ -17,6 +17,7 @@
     "webpack-cli": "^7.0.3"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.100.1",
     "marked": "^18.0.4",
     "ollama": "^0.6.3"
   }

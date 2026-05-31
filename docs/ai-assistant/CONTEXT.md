@@ -5,13 +5,8 @@ Running notes for AI assistant continuity across sessions.
 ## Repository State
 
 - **Branch:** `dev` (all active development; merge to `master` at stable milestones only)
-- **Last commit:** `1764c3c` - "Phase 1 complete - tabbed layout, pop-out windows, catalog card matching"
-- **Uncommitted changes:** Substantial Phase 2 work is in progress but not yet committed.
-  Modified files: `preload.js`, `src/controllers/AppViewController.js`,
-  `src/controllers/CardPanelController.js`, `src/controllers/LookupViewController.js`,
-  `src/index.html`, `src/ipc/IpcHandlerRegistry.js`,
-  `src/services/mcp/MCPOrchestrator.js`, `src/services/mcp/providers/ScryfallProvider.js`,
-  `src/styles/main.css`. Untracked: `resources/images/MTG_Arena_Logo.png`.
+- **Last commit:** `9e69641` - "changing sessions" (LLM model switch to qwen2.5:14b)
+- **Working tree:** Clean
 
 ## Current App State
 
@@ -27,7 +22,7 @@ Phase 1 is complete. Phase 2 (Lookup Tab) is in progress and partially built.
 - Card state persists when Lookup is popped out (main window pushes state on did-finish-load)
 - USD-only pricing in card meta section
 
-### Phase 2 features (uncommitted, in progress)
+### Phase 2 features (committed)
 - **Manual card search** in Lookup tab: search bar with Enter key support, loading state,
   status messages. Clears input on submit, shows "No cards found." or error as appropriate.
 - **`MCPOrchestrator.lookupCards(query)`** - direct name-based fetch bypassing intent
@@ -51,6 +46,23 @@ Phase 1 is complete. Phase 2 (Lookup Tab) is in progress and partially built.
 - Mana symbol rendering (REQ-007) - oracle text and mana costs display raw shorthand
   ({B}, {T}, etc.) instead of official WotC SVG icons
 
+### Phase 2b features (committed - KB structure and injection pipeline)
+- `resources/knowledge/` directory: `manifest.json` + 5 seeded topic files in `topics/`
+- `KnowledgeBaseService` - loads all topic files at startup, keyword-matches using the intent
+  object from MessageIntentService, injects relevant sections into LLM context before each message
+- `MessageIntentService` - stateless intent analysis: detects question type, MTG vocabulary
+  (keywords, mechanics, card types, formats, archetypes), routes to KB topics and Scryfall flags
+- `MCPOrchestrator` integrates both services - assembles KB context + Scryfall context before
+  each LLM call
+- Seeded topics: glossary, rules & mechanics, card types & interactions, formats & legality,
+  deck building strategy (user-maintained, ships with disclaimer)
+
+### Phase 2b gaps (not yet built)
+- ContentManagerService (REQ-011) - fetches WotC Comprehensive Rules, Scryfall catalogs, MTGJson;
+  rebuilds official topic files automatically
+- 30/90-day KB staleness notifications
+- KB status panel in Settings (Phase 4)
+
 ## Active Work / Known Issues
 
 - Slang card names ("bolt", "goyf") won't match the catalog - requires exact or
@@ -63,18 +75,26 @@ Phase 1 is complete. Phase 2 (Lookup Tab) is in progress and partially built.
   official WotC SVG icons. Scryfall's card symbol endpoint is the intended source.
 - `MAX_CARDS = 10` in CardPanelController needs to be removed for Lookup tab per REQ-004.
   When Deck Builder is built it may need its own cap logic - these should diverge.
+- **Sticky context on follow-up messages** - when a user sends a correction like "that's wrong,
+  try again" with no MTG vocabulary, MessageIntentService finds no keyword matches and
+  MCPOrchestrator injects no KB context. The LLM is then flying blind. MCPOrchestrator
+  should remember the last injected context and re-use it on follow-ups that generate no
+  new context of their own.
 
 ## File Structure
 
 ```
 MTGHelper/
-- main.js                           Electron entry point; loads catalog, registers
+- main.js                           Composition root: creates and wires all services, registers
                                     IpcHandlerRegistry and WindowManager, creates main window
 - preload.js                        contextBridge IPC surface for renderer
 - webpack.config.js                 Bundles src/renderer.js -> dist/renderer.bundle.js
 - package.json
 - resources/images/
   - MTG_Arena_Logo.png              MTGA logo used inline in card meta labels
+- resources/knowledge/
+  - manifest.json                   Topic index: IDs, keywords, injection flags, source type
+  - topics/                         MD files injected into LLM context (5 seeded)
 - docs/ai-assistant/                This directory
 - src/
   - index.html                      App shell: nav bar + 3 tab panels
@@ -89,12 +109,22 @@ MTGHelper/
     - CardPanelController.js        Card tab bar + 3-section display (image, info, meta)
     - DeckBuilderViewController.js  Placeholder
   - ipc/
-    - IpcHandlerRegistry.js         Registers send-message, get-catalog-status, lookup-cards
+    - IpcHandlerRegistry.js         Registers send-message, get-catalog-status, lookup-cards,
+                                    get-llm-info; receives llmService and orchestrator via DI
     - WindowManager.js              Creates/tracks pop-out windows; pushes card state on load
   - services/
-    - OllamaService.js              Ollama/LLM communication
+    - ClaudeService.js              Anthropic API communication; primary LLM provider
+    - OllamaService.js              Ollama/LLM communication; fallback provider (qwen2.5:14b)
+    - LLMProviderFactory.js         Selects LLM provider at startup: Claude if
+                                    ANTHROPIC_API_KEY is set, Ollama otherwise
+    - LogService.js                 Singleton logger; color-coded console output + logs/app.log
+                                    (file wiped on each session start)
     - CatalogService.js             Loads all ~26k Scryfall card names at startup; provides
                                     findInMessage() for exact catalog-based name matching
+    - KnowledgeBaseService.js       Loads topic files from resources/knowledge/ at startup;
+                                    getRelevantContext(intent) returns matched KB sections
+    - MessageIntentService.js       Stateless message analysis; returns intent object with
+                                    KB injection flags and Scryfall routing flags
     - mcp/
       - MCPOrchestrator.js          Intent detection, fans out to providers, returns
                                     {context, cards}; also exposes lookupCards() for direct
@@ -116,6 +146,7 @@ MTGHelper/
 | `getViewAssignment()` | renderer → main | Pop-out window asks which tab it owns |
 | `relayCardsToLookup(payload)` | renderer → main | Send cards from assistant/main to lookup pop-out |
 | `lookupCards(query)` | renderer → main | Manual search; returns `CardData[]` |
+| `getLlmInfo()` | renderer → main | Returns `{ displayName }` of active LLM provider |
 | `onTabReturned(cb)` | main → renderer | Event: pop-out window was closed |
 | `onCardsFromChat(cb)` | main → renderer | Event: cards relayed to lookup window |
 | `onSendCurrentCards(cb)` | main → renderer | Event: pop-out asking main to relay card state |
@@ -142,6 +173,13 @@ MTGHelper/
   on main-process .js files. This is a hint only, not an error - safe to ignore.
 - Webpack target is `web` (not `electron-renderer`) because nodeIntegration is false
   in the renderer BrowserWindow. electron-renderer target assumes Node access and fails.
+- Services use manual constructor injection (no framework). `main.js` is the composition
+  root - the only place that instantiates services and wires dependencies. `LogService` is
+  the accepted exception: a module-level singleton imported directly, which is standard
+  practice for cross-cutting loggers.
+- LLM provider is selected at startup by `LLMProviderFactory`: Claude API if
+  `ANTHROPIC_API_KEY` is set in the environment, Ollama otherwise. Switching providers
+  requires a restart (Phase 4 Settings will handle live switching).
 
 ## Decisions Still Open
 

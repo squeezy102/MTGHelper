@@ -35,20 +35,19 @@ Enhance the Lookup tab as a standalone manual card reference tool.
 
 ---
 
-## Phase 2b - Knowledge Base
+## Phase 2b - Knowledge Base (in progress)
 
 Build the foundational MTG knowledge layer that grounds every LLM conversation
 in verified, source-traceable facts.
 
-- `resources/knowledge/` directory structure (sources/, topics/, manifest.json)
-- KnowledgeBaseService: startup loading, keyword matching, always-inject glossary,
-  MCPOrchestrator integration
-- ContentManagerService: fetch WotC Comprehensive Rules, Scryfall catalogs,
+- [x] `resources/knowledge/` directory structure (topics/, manifest.json)
+- [x] KnowledgeBaseService: startup loading, keyword matching, MCPOrchestrator integration
+- [x] Seed topics/: glossary, rules & mechanics, card types & interactions, formats & legality
+- [x] Deck building strategy file ships as user-maintained example with disclaimer
+- [ ] ContentManagerService: fetch WotC Comprehensive Rules, Scryfall catalogs,
   MTGJson; rebuild official topic files; 30-day auto-refresh + user-triggered
-- Seed topics/ with official-source versions of: glossary, rules & mechanics,
-  card types & interactions, formats & legality
-- Deck building strategy file ships as a user-maintained example with disclaimer
-- KB status visible in Settings (which topics are official vs. user-maintained)
+- [ ] sources/ directory (gitignored, populated at runtime by ContentManagerService)
+- [ ] KB status visible in Settings (Phase 4)
 
 **Requirements covered:** REQ-010, REQ-011
 
@@ -95,7 +94,7 @@ Build the deck management and analysis tools on top of the Phase 3a foundation.
 
 ---
 
-## Phase 5 - Multi-LLM Support
+## Phase 5 - Multi-LLM Support (in progress - pulled forward)
 
 Allow the user to choose their LLM backend and configure credentials.
 

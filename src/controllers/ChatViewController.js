@@ -10,12 +10,24 @@ class ChatViewController {
     this.chatInput = document.getElementById('chatInput');
     this.sendButton = document.getElementById('sendButton');
 
+    this.llmLabel = document.getElementById('llmLabel');
+
     this.sendButton.addEventListener('click', () => this.handleSend());
     this.chatInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') this.handleSend();
     });
 
     this._checkCatalogStatus();
+    this._loadLlmLabel();
+  }
+
+  async _loadLlmLabel() {
+    try {
+      const { displayName } = await window.mtgHelper.getLlmInfo();
+      if (this.llmLabel) this.llmLabel.textContent = displayName;
+    } catch {
+      // non-critical
+    }
   }
 
   async _checkCatalogStatus() {
@@ -48,7 +60,7 @@ class ChatViewController {
         this.onCardsFound(cards);
       }
     } catch (error) {
-      this.appendMessage('error', 'Something went wrong. Is Ollama running?');
+      this.appendMessage('error', 'Something went wrong. Check the terminal for details.');
     } finally {
       this.setLoading(false);
     }

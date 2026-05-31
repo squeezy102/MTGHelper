@@ -1,5 +1,6 @@
 const fs   = require('fs');
 const path = require('path');
+const log  = require('./LogService');
 
 const KNOWLEDGE_DIR = path.join(__dirname, '../../resources/knowledge');
 const MANIFEST_PATH = path.join(KNOWLEDGE_DIR, 'manifest.json');
@@ -25,16 +26,27 @@ class KnowledgeBaseService {
   // or null if nothing is relevant.
   // intent is the object returned by MessageIntentService.analyze().
   getRelevantContext(intent) {
-    if (this.topics.size === 0) return null;
+    if (this.topics.size === 0) {
+      log.warn('KnowledgeBase', 'No topics loaded - knowledge base unavailable');
+      return null;
+    }
 
     const selected = [];
+    const selectedIds = [];
     for (const [id, flagName] of Object.entries(TOPIC_INTENT_MAP)) {
       if (intent[flagName] && this.topics.has(id)) {
         selected.push(this.topics.get(id).content);
+        selectedIds.push(id);
       }
     }
 
-    return selected.length > 0 ? selected.join('\n\n---\n\n') : null;
+    if (selected.length > 0) {
+      log.info('KnowledgeBase', `Injecting: [${selectedIds.join(', ')}]`);
+      return selected.join('\n\n---\n\n');
+    }
+
+    log.warn('KnowledgeBase', 'No topics matched - message may lack MTG vocabulary');
+    return null;
   }
 
   // ── Private ──────────────────────────────────────────────────────────────

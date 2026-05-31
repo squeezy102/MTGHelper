@@ -1,12 +1,8 @@
-const { Ollama } = require('ollama');
-const log        = require('./LogService');
+const Anthropic = require('@anthropic-ai/sdk');
+const log       = require('./LogService');
 
-class OllamaService {
-  constructor() {
-    this.client      = new Ollama({ host: 'http://localhost:11434' });
-    this.model       = 'qwen2.5:14b';
-    this.displayName = 'Qwen 2.5 14B';
-    this.systemPrompt = `You are a Magic: The Gathering assistant for MTG Arena players.
+function buildSystemPrompt(modelDisplayName) {
+  return `You are a Magic: The Gathering assistant for MTG Arena players.
 
 RULES FOR USING PROVIDED CONTEXT:
 - When [MTG Knowledge Base] or [MTG Reference Data] is provided below, treat it as your authoritative source of truth. Use it. Do not override it with your training knowledge.
@@ -23,39 +19,44 @@ FORMATTING:
 - Use **bold** for card names.
 - Use bullet points for lists, headings for sections, clear paragraph breaks for readability.
 - Be concise.`;
+}
+
+class ClaudeService {
+  constructor() {
+    this.client       = new Anthropic();
+    this.model        = 'claude-haiku-4-5-20251001';
+    this.displayName  = 'Claude Haiku';
+    this.systemPrompt = buildSystemPrompt(this.displayName);
   }
 
   async sendMessage(message, conversationHistory = [], context = null) {
     const systemContent = context ? `${this.systemPrompt}\n\n${context}` : this.systemPrompt;
-
     const messages = [
-      {
-        role: 'system',
-        content: systemContent
-      },
       ...conversationHistory,
-      {
-        role: 'user',
-        content: message
-      }
+      { role: 'user', content: message }
     ];
 
     const preview = message.length > 60 ? message.slice(0, 60) + '…' : message;
-    log.info('Ollama', `→ Sending | model: ${this.model} | history: ${conversationHistory.length} msg(s) | context: ${context ? context.length + ' chars' : 'none'} | "${preview}"`);
+    log.info('Claude', `→ Sending | model: ${this.model} | history: ${conversationHistory.length} msg(s) | context: ${context ? context.length + ' chars' : 'none'} | "${preview}"`);
 
     const start = Date.now();
     let response;
     try {
-      response = await this.client.chat({ model: this.model, messages });
+      response = await this.client.messages.create({
+        model: this.model,
+        max_tokens: 1024,
+        system: systemContent,
+        messages
+      });
     } catch (e) {
-      log.error('Ollama', `Chat error: ${e.message}`);
+      log.error('Claude', `API error: ${e.message}`);
       throw e;
     }
 
-    const text = response.message.content;
-    log.info('Ollama', `← Received | ${text.length} chars | ${Date.now() - start}ms`);
+    const text = response.content[0].text;
+    log.info('Claude', `← Received | ${text.length} chars | ${Date.now() - start}ms`);
     return text;
   }
 }
 
-module.exports = OllamaService;
+module.exports = ClaudeService;

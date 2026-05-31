@@ -1,4 +1,5 @@
 const BaseProvider = require('./BaseProvider');
+const log          = require('../../LogService');
 
 const SCRYFALL_BASE = 'https://api.scryfall.com';
 const MAX_CARDS = 5;
@@ -42,13 +43,21 @@ class ScryfallProvider extends BaseProvider {
 
     const cardNames = this.catalog.findInMessage(message).slice(0, MAX_CARDS);
 
-    if (cardNames.length === 0) return { contextText: null, cards: [] };
+    if (cardNames.length === 0) {
+      log.info('Scryfall', 'No card names detected in message');
+      return { contextText: null, cards: [] };
+    }
 
+    log.info('Scryfall', `Fetching ${cardNames.length} card(s): [${cardNames.join(', ')}]`);
     const rawCards = await Promise.all(
       cardNames.map(name => this._fetchCard(name))
     );
     const validCards = rawCards.filter(Boolean);
-    if (validCards.length === 0) return { contextText: null, cards: [] };
+    if (validCards.length === 0) {
+      log.warn('Scryfall', 'Card names detected but none found via Scryfall API');
+      return { contextText: null, cards: [] };
+    }
+    log.info('Scryfall', `Fetched ${validCards.length}/${cardNames.length} card(s) successfully`);
 
     const cards = await Promise.all(
       validCards.map(raw => this._buildCardData(raw, intentFlags))
@@ -65,9 +74,13 @@ class ScryfallProvider extends BaseProvider {
     try {
       const url = `${SCRYFALL_BASE}/cards/named?exact=${encodeURIComponent(name)}`;
       const res = await fetch(url, { headers: { 'User-Agent': 'MTGHelper/1.0' } });
-      if (!res.ok) return null;
+      if (!res.ok) {
+        log.warn('Scryfall', `Card not found: "${name}" (HTTP ${res.status})`);
+        return null;
+      }
       return await res.json();
-    } catch {
+    } catch (e) {
+      log.error('Scryfall', `Network error fetching "${name}": ${e.message}`);
       return null;
     }
   }

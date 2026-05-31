@@ -3,7 +3,7 @@
 ## Prerequisites
 
 1. Install Ollama from https://ollama.com
-2. Run `ollama run llama3.1` to download the Llama 3.1 8B model (~4.7GB)
+2. Run `ollama pull qwen2.5:14b` to download the default local model (~9GB)
 3. Install Node.js LTS from https://nodejs.org
 4. Install VS Code from https://code.visualstudio.com
 5. Install Git from https://git-scm.com
