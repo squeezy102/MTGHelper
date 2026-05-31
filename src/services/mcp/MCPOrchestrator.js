@@ -1,19 +1,13 @@
-const ScryfallProvider = require('./providers/ScryfallProvider');
-
-const INTENT_KEYWORDS = {
-  isRulesQuestion:   ['can', 'does', 'when', 'trigger', 'stack', 'ruling', 'interaction',
-                      'how does', 'resolve', 'ability', 'effect', 'phase', 'priority',
-                      'combat', 'damage', 'dies', 'destroy', 'exile', 'ambiguous', 'proceed'],
-  isPricingQuestion: ['price', 'worth', 'buy', 'sell', 'cheap', 'expensive', 'value'],
-  isLegalityQuestion:['legal', 'ban', 'banned', 'format', 'standard', 'modern',
-                      'commander', 'pioneer', 'legacy', 'vintage', 'pauper'],
-  isArenaQuestion:   ['arena', 'mtga', 'digital', 'bo1', 'bo3'],
-};
+const ScryfallProvider     = require('./providers/ScryfallProvider');
+const KnowledgeBaseService = require('../KnowledgeBaseService');
+const MessageIntentService = require('../MessageIntentService');
 
 class MCPOrchestrator {
   constructor(catalog) {
-    this.catalog = catalog;
-    this.providers = [new ScryfallProvider(catalog)];
+    this.catalog       = catalog;
+    this.providers     = [new ScryfallProvider(catalog)];
+    this.knowledgeBase = new KnowledgeBaseService();
+    this.intentService = new MessageIntentService();
   }
 
   async lookupCards(query) {
@@ -23,31 +17,31 @@ class MCPOrchestrator {
   }
 
   async getResult(message) {
-    const intentFlags = this._detectIntent(message);
+    const intent = this.intentService.analyze(message);
 
     const results = await Promise.all(
       this.providers
-        .filter(p => p.canHandle(intentFlags))
-        .map(p => p.getContext(message, intentFlags))
+        .filter(p => p.canHandle(intent))
+        .map(p => p.getContext(message, intent))
     );
 
     const cards = results.flatMap(r => r.cards || []);
-    const contextParts = results.map(r => r.contextText).filter(Boolean);
 
-    const context = contextParts.length > 0
-      ? `[MTG Reference Data]\n${contextParts.join('\n\n')}\n[End Reference Data]`
-      : null;
+    const contextParts = [];
+
+    const kbContext = this.knowledgeBase.getRelevantContext(intent);
+    if (kbContext) {
+      contextParts.push(`[MTG Knowledge Base]\n${kbContext}\n[End Knowledge Base]`);
+    }
+
+    const scryfallParts = results.map(r => r.contextText).filter(Boolean);
+    if (scryfallParts.length > 0) {
+      contextParts.push(`[MTG Reference Data]\n${scryfallParts.join('\n\n')}\n[End Reference Data]`);
+    }
+
+    const context = contextParts.length > 0 ? contextParts.join('\n\n') : null;
 
     return { context, cards };
-  }
-
-  _detectIntent(message) {
-    const lower = message.toLowerCase();
-    const flags = {};
-    for (const [flag, keywords] of Object.entries(INTENT_KEYWORDS)) {
-      flags[flag] = keywords.some(k => lower.includes(k));
-    }
-    return flags;
   }
 }
 

@@ -298,7 +298,8 @@ Each topic entry in manifest.json contains:
 ## REQ-011: Knowledge Base Content Manager
 
 A service that fetches authoritative source documents and rebuilds official
-knowledge base topic files from them.
+knowledge base topic files from them. The app ships with a pre-populated
+knowledge base; updates are always optional and user-controlled.
 
 ### Authoritative Sources
 - **WotC Comprehensive Rules** - Full plain-text rules document published by
@@ -317,19 +318,54 @@ The ContentManagerService processes source documents into topic MD files using
 inventing, interpolating, or interpreting meaning. Every claim in an official
 topic file must be directly traceable to a source document.
 
+### Shipping Policy
+- The app ships with a pre-populated `topics/` directory built using the
+  ContentManagerService before release. Users have a working knowledge base
+  from first launch with no update required.
+- The release date of the shipped content is recorded in the manifest so the
+  user can see exactly how old it is.
+
+### Update Policy - User Always in Control
+- **Auto-update is off by default.** The app never updates the knowledge base
+  without the user's knowledge or approval.
+- Auto-update can be enabled in Settings (REQ-006) by the user. When enabled,
+  the update runs silently in the background without interrupting the app.
+- **The app never locks the user out or blocks usage to perform an update.**
+  Updates always happen in the background.
+- Manual updates are always triggerable from Settings regardless of auto-update
+  setting.
+
+### Staleness Notifications
+The app notifies the user passively when the knowledge base is aging. These
+are non-blocking notifications - the app remains fully usable.
+- **30+ days since last update:** Yellow toast notification at startup.
+  Dismissible. Includes a direct link to trigger an update.
+- **90+ days since last update:** Red toast notification at startup.
+  Same behavior, stronger visual weight.
+- Toasts auto-dismiss after a short duration. The last-update date is always
+  visible in Settings regardless of notification state.
+
+### Update Progress UI
+When the user triggers a manual update:
+- A progress panel displays with an approximate completion time estimate
+- A progress bar advances as each task completes
+- Task labels update in real time (e.g. "Fetching WotC Comprehensive Rules...",
+  "Rebuilding glossary...", "Updating card types...")
+- Completion time estimate recalculates as tasks finish
+
 ### Refresh Behavior
-- Runs automatically if no refresh has occurred in the last 30 days
-- User-triggerable from Settings (REQ-006) at any time
 - Fetches all sources, stores raw copies in `sources/`
 - Rebuilds only topics tagged `"source": "official"` in the manifest
 - Never modifies files tagged `"source": "user"`
-- Logs each update: what changed, which source, timestamp
+- Updates `lastRefreshed` and `lastBuilt` timestamps in the manifest on success
 - App functions fully offline after first run (sources and topics cached locally)
 
 ### Failure Handling
 - If a source fetch fails, the existing topic file is kept unchanged
 - Partial failures do not block the rest of the refresh
-- User is notified of any fetch failures so they know content may be stale
+- All errors are logged with timestamp, source URL, and error detail
+- The progress UI surfaces errors inline so the user knows which tasks failed
+- A failed update does not alter the `lastRefreshed` timestamp
 
 ---
 
