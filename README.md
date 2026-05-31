@@ -161,6 +161,8 @@ git checkout -b chore/remove-unused-images
 ```
 
 Never commit directly to `dev` or `master` - always work on a branch and submit a pull request.
+Branches are short-lived: one branch per piece of work, deleted automatically when the PR merges.
+New work always means a new branch checked out fresh from `dev`.
 
 ### 2. Open the project in VS Code and launch Claude Code
 
