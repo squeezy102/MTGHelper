@@ -8,5 +8,8 @@ logs/
 .env.*
 *.env
 
+# Claude Code local settings
+.claude/
+
 # Knowledge base raw source documents (fetched at runtime by ContentManagerService)
 resources/knowledge/sources/
