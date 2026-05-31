@@ -1,7 +1,17 @@
 # MTG Helper
 
-An AI-powered Magic: The Gathering desktop companion built with Electron. It provides a
-conversational MTG assistant, a card lookup tool, and a collaborative deck-building workspace.
+A desktop Magic: The Gathering companion built primarily for MTGA (Arena), but useful for
+tabletop Magic as well. Rules searching, card lookup, deck building strategy, meta questions,
+deck list management, and MTGA import/export - all in one place.
+
+**The problem it solves:** Using a general-purpose LLM for MTG help is frustrating. It
+hallucinates card text. It forgets context between sessions. It states wrong rules confidently.
+You spend more time correcting it than getting help.
+
+MTG Helper sits between you and the LLM. It automatically pulls verified card data from
+Scryfall, injects official rules and knowledge base context, and gives the LLM everything
+it needs before your message is ever sent. The goal is not to replace the LLM - it's to
+set it up for success so the hallucinations, drift, and churn are dramatically reduced.
 
 > [!CAUTION]
 > ## KEEP THE DOCUMENTATION CURRENT

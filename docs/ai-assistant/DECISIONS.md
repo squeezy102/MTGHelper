@@ -1,12 +1,37 @@
 # MTG Helper - Architecture Decision Log
 
-## Core Product Philosophy
+## Vision and Origin
 
-**Why this app exists** - Built out of direct frustration with LLMs confidently
-stating incorrect MTG rules, misidentifying cards, and failing to retain
-corrections across sessions. The goal is an AI companion that is grounded,
-honest, and verifiably correct - not one that sounds plausible but makes things
-up. Every architectural decision flows from this.
+MTG Helper is a desktop application built primarily for MTGA (Magic: The Gathering Arena)
+assistance, but applicable to tabletop Magic as well. The intent is a one-stop shop for:
+
+- Rules searching and clarification
+- Card lookup and reference
+- Deck building strategy and suggestions
+- Questions about current meta and formats
+- Maintaining and organizing deck lists
+- Building and exporting decks in MTGA-compatible format
+
+**The problem it solves** - Using a general-purpose LLM for MTG assistance is frustrating.
+The LLM has to be re-explained context it already knew last session. It hallucinates card
+text and rulings. It drifts off task. It states incorrect rules with full confidence. The
+user ends up spending more time correcting the LLM than actually getting help - explaining
+things repeatedly, roping it back in, and second-guessing every response.
+
+MTG Helper is a layer between the player and the LLM. It intercepts user input, performs
+API lookups and documentation references automatically, and determines the best way to
+approach the LLM with the question. It provides the LLM with verified card data, official
+rules context, a curated knowledge base, and behavioral guidelines - before the user's
+message is ever sent.
+
+**The goal is not to replace the LLM - it's to set it up for success.** We are still
+using an LLM to talk about Magic. But with MTG Helper, the LLM arrives at every question
+already equipped with the facts it needs. The hallucinations, the drift, the churn of
+correcting and re-explaining - all of that should be dramatically reduced.
+
+---
+
+## Core Product Philosophy
 
 **Scryfall-first data strategy** - All factual MTG data must be sourced from
 Scryfall before the LLM is ever involved. Card names are resolved against the
