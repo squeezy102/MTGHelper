@@ -81,9 +81,10 @@ searches for cards directly and browses their data.
 ### Layout
 - Card display retains the three-section format (image, card info, card meta)
 - Card tabs at the top allow browsing multiple cards simultaneously
-- No hard cap on card count - user browses as many as they want
-- Large batch imports (e.g. a full deck list) are fetched with rate limiting to
-  respect the Scryfall API
+- Maximum of 10 cards at a time; when the cap is reached the oldest card is
+  evicted (FIFO) to make room for the newest
+- Card Lookup is a quick reference tool - deep card work and large card sets
+  belong in the Workshop tab
 
 ### Write to Lookup (Feed Toggle)
 - A **"Write to Lookup"** toggle lives in the MTG Wizard tab toolbar
@@ -96,7 +97,7 @@ searches for cards directly and browses their data.
 - Tooltip explains what the toggle does
 
 ### Card Deduplication and Disambiguation
-- The Lookup tab never displays two tabs for the same card
+- Card Lookup never displays two tabs for the same card
 - When a message contains names of varying specificity (e.g. "Meathook Massacre"
   and "Meathook Massacre II"), only the longest match is kept - **longest match wins**
 - A card already loaded is not added again if mentioned in a subsequent message

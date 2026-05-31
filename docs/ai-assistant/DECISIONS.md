@@ -174,6 +174,7 @@ User clicks pop-out button on Lookup tab
 |---|---|
 | Tab naming: MTG Wizard, Card Lookup, Workshop | Names reflect intent, not implementation. MTG Wizard signals a conversational companion you ask things. Card Lookup is self-descriptive - it's a lookup tool, nothing more. Workshop evokes a workspace where you and an AI collaborator build side by side. |
 | Card Lookup scope: no LLM card output | Card Lookup is a reference tool only. LLM response card surfacing belongs in the Workshop where the LLM is an active participant. Feeding AI output into Card Lookup would blur its purpose. |
+| Card Lookup 10-card cap kept intentionally | Card Lookup is a quick reference tool, not a bulk card browser. Users looking at 50+ cards are using the wrong tab - that belongs in the Workshop. FIFO rotation keeps the panel focused. |
 | Write to Lookup feeds user-mentioned cards only | The "Write to Lookup" toggle in MTG Wizard carries cards the user mentioned - not the LLM's output. The LLM's card suggestions are the Workshop's domain. |
 | REQ-009 scoped to Workshop only | LLM response card matching is only meaningful where both sides of the conversation have dedicated card areas. The Workshop split-pane provides that; MTG Wizard and Card Lookup do not. |
 | Workshop AI has its own working deck area | The Workshop is designed as a side-by-side collaboration, not a chat window with a card panel. The AI maintains its own proposed deck that the user can inspect, approve from, or copy wholesale - like sitting across from a deckbuilder who is also building in real time. |

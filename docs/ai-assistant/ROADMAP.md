@@ -26,8 +26,7 @@ Enhance the Card Lookup tab as a standalone manual card reference tool.
 
 - Manual card search (search bar, results list)
 - Full card detail view (image, info, meta - same three sections)
-- Batch import from a deck list (paste a list, fetch all cards with rate limiting)
-- No cap on card count
+- 10 card cap with FIFO rotation - oldest card evicted when cap is reached
 
 **Requirements covered:** REQ-004 (complete)
 

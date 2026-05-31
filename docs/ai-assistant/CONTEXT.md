@@ -46,8 +46,7 @@ Phase 1 is complete. Phase 2 (Lookup Tab) is in progress and partially built.
 
 ### Phase 2 gaps (not yet built)
 - Batch import from a deck list (paste, rate-limited fetch)
-- No hard cap on Card Lookup cards - `MAX_CARDS = 10` constant still present in
-  `CardPanelController.js` and needs to be removed/bypassed for the Card Lookup tab
+- Batch import from a deck list (paste, rate-limited fetch) - moved to Workshop tab scope
 - LLM response card matching (REQ-009) - scoped to Workshop tab; not yet built
 - Mana symbol rendering (REQ-007) - oracle text and mana costs display raw shorthand
   ({B}, {T}, etc.) instead of official WotC SVG icons
@@ -79,8 +78,8 @@ Phase 1 is complete. Phase 2 (Lookup Tab) is in progress and partially built.
 - Mana symbols in oracle text and mana cost fields currently render as raw
   shorthand notation ({B}, {T}, etc.). REQ-007 tracks replacement with
   official WotC SVG icons. Scryfall's card symbol endpoint is the intended source.
-- `MAX_CARDS = 10` in CardPanelController needs to be removed for Card Lookup tab per REQ-004.
-  When Deck Builder is built it may need its own cap logic - these should diverge.
+- `MAX_CARDS = 10` in CardPanelController is correct and intentional for Card Lookup.
+  Workshop will need its own separate card panel logic when built - these should diverge.
 - **Sticky context on follow-up messages** - when a user sends a correction like "that's wrong,
   try again" with no MTG vocabulary, MessageIntentService finds no keyword matches and
   MCPOrchestrator injects no KB context. The LLM is then flying blind. MCPOrchestrator
