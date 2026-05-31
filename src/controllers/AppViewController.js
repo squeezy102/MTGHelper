@@ -13,18 +13,21 @@ class AppViewController {
   }
 
   async _init() {
-    const viewAssignment = await window.mtgHelper.getViewAssignment();
+    const [viewAssignment, symbolMap] = await Promise.all([
+      window.mtgHelper.getViewAssignment(),
+      window.mtgHelper.getSymbolMap(),
+    ]);
     if (viewAssignment) {
-      this._initPopoutMode(viewAssignment);
+      this._initPopoutMode(viewAssignment, symbolMap);
     } else {
-      this._initFullMode();
+      this._initFullMode(symbolMap);
     }
   }
 
   // ── Full window (all tabs) ───────────────────────────────────────────────
 
-  _initFullMode() {
-    this.lookupView = new LookupViewController();
+  _initFullMode(symbolMap) {
+    this.lookupView = new LookupViewController(symbolMap);
     this.deckBuilderView = new DeckBuilderViewController();
     this.chatView = new ChatViewController(cards => this._onCardsFound(cards));
 
@@ -122,7 +125,7 @@ class AppViewController {
 
   // ── Pop-out window (single view) ─────────────────────────────────────────
 
-  _initPopoutMode(viewName) {
+  _initPopoutMode(viewName, symbolMap) {
     this.appShell.classList.add('app-shell--popout');
 
     // Clear all panels first, then activate only the assigned one
@@ -131,7 +134,7 @@ class AppViewController {
     if (panel) panel.classList.add('tab-panel--active');
 
     if (viewName === 'lookup') {
-      this.lookupView = new LookupViewController();
+      this.lookupView = new LookupViewController(symbolMap);
       this.lookupView.listenForRelayedCards();
       const input = document.getElementById('lookupInput');
       if (input) setTimeout(() => input.focus(), 0);

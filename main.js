@@ -4,6 +4,7 @@ const path = require('path');
 const IpcHandlerRegistry   = require('./src/ipc/IpcHandlerRegistry');
 const WindowManager        = require('./src/ipc/WindowManager');
 const CatalogService       = require('./src/services/CatalogService');
+const SymbolService        = require('./src/services/SymbolService');
 const KnowledgeBaseService = require('./src/services/KnowledgeBaseService');
 const MessageIntentService = require('./src/services/MessageIntentService');
 const ScryfallProvider     = require('./src/services/mcp/providers/ScryfallProvider');
@@ -30,8 +31,9 @@ function createMainWindow() {
 
 app.whenReady().then(async () => {
   // ── Services ──────────────────────────────────────────────────────────────
-  const catalog       = new CatalogService();
-  await catalog.load();
+  const catalog        = new CatalogService();
+  const symbolService  = new SymbolService();
+  await Promise.all([catalog.load(), symbolService.load()]);
 
   const knowledgeBase    = new KnowledgeBaseService();
   const intentService    = new MessageIntentService();
@@ -40,7 +42,7 @@ app.whenReady().then(async () => {
   const llmService       = LLMProviderFactory.create();
 
   // ── IPC ───────────────────────────────────────────────────────────────────
-  const ipcRegistry = new IpcHandlerRegistry(catalog, llmService, orchestrator);
+  const ipcRegistry = new IpcHandlerRegistry(catalog, llmService, orchestrator, symbolService);
   ipcRegistry.register();
 
   // ── Window ────────────────────────────────────────────────────────────────

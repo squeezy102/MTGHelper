@@ -43,13 +43,15 @@ Phase 1 is complete. Phase 2 (Lookup Tab) is in progress and partially built.
 - **Meta block borders** - each `.meta-block` now has a subtle border, border-radius,
   and padding to visually separate the four cells in the meta section
 - **Lookup auto-focus** - switching to the Card Lookup tab automatically focuses the search input
+- **Mana symbol rendering (REQ-007)** - `SymbolService` fetches all card symbols from Scryfall
+  at startup and caches them as data URIs; `CardPanelController._renderSymbols()` replaces
+  `{X}` notation with inline `<img>` tags in mana cost and oracle text fields.
+  Symbol map flows: `main.js` → IPC `get-symbol-map` → `AppViewController` → `LookupViewController`
+  → `CardPanelController`. Falls back to raw text if a symbol fails to load.
 
 ### Phase 2 gaps (not yet built)
-- Batch import from a deck list (paste, rate-limited fetch)
-- Batch import from a deck list (paste, rate-limited fetch) - moved to Workshop tab scope
+- Batch import from a deck list - moved to Workshop tab scope
 - LLM response card matching (REQ-009) - scoped to Workshop tab; not yet built
-- Mana symbol rendering (REQ-007) - oracle text and mana costs display raw shorthand
-  ({B}, {T}, etc.) instead of official WotC SVG icons
 
 ### Phase 2b features (committed - KB structure and injection pipeline)
 - `resources/knowledge/` directory: `manifest.json` + 5 seeded topic files in `topics/`
@@ -75,9 +77,11 @@ Phase 1 is complete. Phase 2 (Lookup Tab) is in progress and partially built.
 - "Write to Lookup" toggle is off by default and not persisted between sessions
   (resets on restart). Persistence is a settings/config feature (Phase 4).
 - Workshop tab is a placeholder - Phase 3 work.
-- Mana symbols in oracle text and mana cost fields currently render as raw
-  shorthand notation ({B}, {T}, etc.). REQ-007 tracks replacement with
-  official WotC SVG icons. Scryfall's card symbol endpoint is the intended source.
+- **Card panel layout redesign pending** - the current three-section vertical
+  stack (image → info → meta) wastes horizontal space at full window width.
+  Intended redesign: top half splits into left (card text) and right (card image),
+  bottom half keeps meta section as-is. Documented in REQ-004.
+  Implement before or during Phase 3 since Workshop will share the card panel component.
 - `MAX_CARDS = 10` in CardPanelController is correct and intentional for Card Lookup.
   Workshop will need its own separate card panel logic when built - these should diverge.
 - **Sticky context on follow-up messages** - when a user sends a correction like "that's wrong,
@@ -128,6 +132,8 @@ MTGHelper/
                                     (file wiped on each session start)
     - CatalogService.js             Loads all ~26k Scryfall card names at startup; provides
                                     findInMessage() for exact catalog-based name matching
+    - SymbolService.js              Fetches all MTG card symbols from Scryfall at startup;
+                                    caches as data URIs; exposed via get-symbol-map IPC
     - KnowledgeBaseService.js       Loads topic files from resources/knowledge/ at startup;
                                     getRelevantContext(intent) returns matched KB sections
     - MessageIntentService.js       Stateless message analysis; returns intent object with
@@ -154,6 +160,7 @@ MTGHelper/
 | `relayCardsToLookup(payload)` | renderer → main | Send cards from assistant/main to lookup pop-out |
 | `lookupCards(query)` | renderer → main | Manual search; returns `CardData[]` |
 | `getLlmInfo()` | renderer → main | Returns `{ displayName }` of active LLM provider |
+| `getSymbolMap()` | renderer → main | Returns symbol code → data URI map for mana symbol rendering |
 | `onTabReturned(cb)` | main → renderer | Event: pop-out window was closed |
 | `onCardsFromChat(cb)` | main → renderer | Event: cards relayed to lookup window |
 | `onSendCurrentCards(cb)` | main → renderer | Event: pop-out asking main to relay card state |

@@ -1,8 +1,8 @@
 import CardPanelController from './CardPanelController.js';
 
 class LookupViewController {
-  constructor() {
-    this.cardPanel = new CardPanelController();
+  constructor(symbolMap) {
+    this.cardPanel = new CardPanelController(symbolMap);
 
     this.input    = document.getElementById('lookupInput');
     this.button   = document.getElementById('lookupButton');

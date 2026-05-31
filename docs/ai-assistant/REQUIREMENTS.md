@@ -79,12 +79,25 @@ A standalone card reference tool. No AI or conversational elements - the user
 searches for cards directly and browses their data.
 
 ### Layout
-- Card display retains the three-section format (image, card info, card meta)
 - Card tabs at the top allow browsing multiple cards simultaneously
 - Maximum of 10 cards at a time; when the cap is reached the oldest card is
   evicted (FIFO) to make room for the newest
 - Card Lookup is a quick reference tool - deep card work and large card sets
   belong in the Workshop tab
+
+### Card Display Layout (pending redesign)
+The current three-section vertical stack (image → info → meta) wastes horizontal
+space and creates alignment problems at full window width. The intended layout is:
+
+- **Top half - split horizontally:**
+  - Left side: all card text (name, mana cost, type line, oracle text, flavor
+    text, power/toughness, artist, set)
+  - Right side: card image - larger display area than the current top slot
+- **Bottom half:** meta section unchanged (legality, pricing, rulings)
+
+This gives the card image more vertical real estate, constrains the text area
+to a natural reading width, and eliminates the horizontal space waste of
+full-width text fields.
 
 ### Write to Lookup (Feed Toggle)
 - A **"Write to Lookup"** toggle lives in the MTG Wizard tab toolbar

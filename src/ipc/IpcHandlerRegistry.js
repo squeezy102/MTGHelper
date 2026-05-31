@@ -2,10 +2,11 @@ const { ipcMain } = require('electron');
 const log          = require('../services/LogService');
 
 class IpcHandlerRegistry {
-  constructor(catalog, llmService, orchestrator) {
-    this.catalog      = catalog;
-    this.llmService   = llmService;
-    this.orchestrator = orchestrator;
+  constructor(catalog, llmService, orchestrator, symbolService) {
+    this.catalog        = catalog;
+    this.llmService     = llmService;
+    this.orchestrator   = orchestrator;
+    this.symbolService  = symbolService;
   }
 
   register() {
@@ -28,6 +29,8 @@ class IpcHandlerRegistry {
     ipcMain.handle('get-llm-info', () => ({
       displayName: this.llmService.displayName
     }));
+
+    ipcMain.handle('get-symbol-map', () => this.symbolService.getSymbolMap());
   }
 }
 
