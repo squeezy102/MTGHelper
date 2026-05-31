@@ -1,0 +1,36 @@
+name: Branch Name Check
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - master
+
+jobs:
+  check-branch-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch naming convention
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          if [[ "$BRANCH" =~ ^(feature|fix|docs|chore)/.+ ]]; then
+            echo "✓ Branch name '$BRANCH' follows the required convention."
+          else
+            echo "✗ Branch name '$BRANCH' does not follow the required naming convention."
+            echo ""
+            echo "Branch names must start with one of the following prefixes:"
+            echo ""
+            echo "  feature/   New features or enhancements"
+            echo "  fix/       Bug fixes"
+            echo "  docs/      Documentation changes only"
+            echo "  chore/     Maintenance, cleanup, dependency updates"
+            echo ""
+            echo "Examples:"
+            echo "  feature/mana-symbol-rendering"
+            echo "  fix/lookup-search-bar-not-clearing"
+            echo "  docs/update-workshop-requirements"
+            echo "  chore/remove-unused-images"
+            echo ""
+            echo "Rename your branch and resubmit your pull request."
+            exit 1
+          fi

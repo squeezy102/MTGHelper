@@ -142,11 +142,25 @@ Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 
 ### 1. Create your branch
 
+Branches must follow this naming convention or your pull request will be automatically blocked:
+
+| Prefix | Use it for |
+|---|---|
+| `feature/` | New features or enhancements |
+| `fix/` | Bug fixes |
+| `docs/` | Documentation changes only |
+| `chore/` | Maintenance, cleanup, dependency updates |
+
+The part after the slash should be short and descriptive, using hyphens between words:
+
 ```
-git checkout -b your-name/feature-description
+git checkout -b feature/mana-symbol-rendering
+git checkout -b fix/lookup-search-bar-not-clearing
+git checkout -b docs/update-workshop-requirements
+git checkout -b chore/remove-unused-images
 ```
 
-Never commit directly to `dev` or `master`.
+Never commit directly to `dev` or `master` - always work on a branch and submit a pull request.
 
 ### 2. Open the project in VS Code and launch Claude Code
 

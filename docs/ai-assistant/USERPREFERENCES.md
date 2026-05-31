@@ -40,12 +40,18 @@ Preferences and working style guidance for AI assistant sessions on this project
 - When asking the user to check output, tell them precisely: which window to open,
   which tab to click, what the output will look like, and what to copy/paste back
 
-## Git Commits
+## Git Commits and Branches
 
 - Don't commit every small change - commit at logical checkpoints (meaningful
   chunks of related changes, working states after a feature area is complete)
 - During major restructuring, intermediate commits are acceptable as safety checkpoints
 - Avoid committing docs updates, small tweaks, and minor fixes individually - batch them
+- Branch naming convention is enforced via GitHub Actions on all PRs:
+  - `feature/short-description` - new features or enhancements
+  - `fix/short-description` - bug fixes
+  - `docs/short-description` - documentation only
+  - `chore/short-description` - maintenance, cleanup, dependency updates
+- Always suggest the correct branch name prefix when starting new work
 
 ## Documentation
 
