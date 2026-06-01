@@ -5,12 +5,13 @@ Running notes for AI assistant continuity across sessions.
 ## Repository State
 
 - **Branch:** `dev` (all active development; merge to `master` at stable milestones only)
-- **Last commit:** `d0d08ab` - "Implement mana symbol rendering (REQ-007) and document card panel layout redesign"
+- **Last commit:** `7ed1952` - "Add Gemini as free cloud fallback; define three-tier LLM provider hierarchy"
 - **Uncommitted changes:** None
 
 ## Current App State
 
-Phase 1 is complete. Phase 2 (Lookup Tab) is in progress and partially built.
+Phases 1, 2, and 2b (partial) are complete. No code work was done this session -
+it was entirely design and documentation. The next session begins implementation.
 
 ### Phase 1 features (committed, stable)
 - Tabbed layout: MTG Wizard / Card Lookup / Workshop (placeholder)
@@ -23,35 +24,23 @@ Phase 1 is complete. Phase 2 (Lookup Tab) is in progress and partially built.
 - USD-only pricing in card meta section
 - **LLM source header** on every assistant message: muted chip showing active provider name
   (e.g. "Claude Haiku"), plus a gold `+ MTGHelper` label when KB context was injected.
-  Implemented in `ChatViewController._buildSourceHeader(contextUsed)`. The `contextUsed`
-  boolean comes from `IpcHandlerRegistry` (`context !== null` after orchestration).
+  Implemented in `ChatViewController._buildSourceHeader(contextUsed)`.
 - **Active LLM label** in the MTG Wizard toolbar (top-right, italic) populated at init via
-  `getLlmInfo()` IPC. Updates automatically if provider changes at next restart.
+  `getLlmInfo()` IPC.
 
-### Phase 2 features (committed)
+### Phase 2 features (committed, stable)
 - **Manual card search** in Card Lookup tab: search bar with Enter key support, loading state,
   status messages. Clears input on submit, shows "No cards found." or error as appropriate.
 - **`MCPOrchestrator.lookupCards(query)`** - direct name-based fetch bypassing intent
   detection and LLM context building; used by the Lookup search bar
-- **`ScryfallProvider.fetchCards(names)`** - direct card fetch by known name list with no
-  context text generation
-- **IPC: `lookup-cards`** handler registered in IpcHandlerRegistry; exposed as
-  `window.mtgHelper.lookupCards(query)` in preload.js
-- **MTG Arena logo** displayed inline in the Availability and Legality meta blocks;
-  logo file at `resources/images/MTG_Arena_Logo.png`; CSS: `.arena-logo { height: 32px }`,
-  `.arena-label { display: flex; align-items: center; gap: 6px }`
-- **Meta block borders** - each `.meta-block` now has a subtle border, border-radius,
-  and padding to visually separate the four cells in the meta section
-- **Lookup auto-focus** - switching to the Card Lookup tab automatically focuses the search input
+- **`ScryfallProvider.fetchCards(names)`** - direct card fetch by known name list
+- **IPC: `lookup-cards`** handler in IpcHandlerRegistry; exposed as `window.mtgHelper.lookupCards(query)`
+- **MTG Arena logo** displayed inline in Availability and Legality meta blocks
+- **Meta block borders** - subtle border, border-radius, and padding on each `.meta-block`
+- **Lookup auto-focus** - switching to Card Lookup tab automatically focuses the search input
 - **Mana symbol rendering (REQ-007)** - `SymbolService` fetches all card symbols from Scryfall
   at startup and caches them as data URIs; `CardPanelController._renderSymbols()` replaces
   `{X}` notation with inline `<img>` tags in mana cost and oracle text fields.
-  Symbol map flows: `main.js` → IPC `get-symbol-map` → `AppViewController` → `LookupViewController`
-  → `CardPanelController`. Falls back to raw text if a symbol fails to load.
-
-### Phase 2 gaps (not yet built)
-- Batch import from a deck list - moved to Workshop tab scope
-- LLM response card matching (REQ-009) - scoped to Workshop tab; not yet built
 
 ### Phase 2b features (committed - KB structure and injection pipeline)
 - `resources/knowledge/` directory: `manifest.json` + 5 seeded topic files in `topics/`
@@ -64,40 +53,75 @@ Phase 1 is complete. Phase 2 (Lookup Tab) is in progress and partially built.
 - Seeded topics: glossary, rules & mechanics, card types & interactions, formats & legality,
   deck building strategy (user-maintained, ships with disclaimer)
 
-### Phase 2b gaps (not yet built)
-- ContentManagerService (REQ-011) - fetches WotC Comprehensive Rules, Scryfall catalogs, MTGJson;
-  rebuilds official topic files automatically
-- 30/90-day KB staleness notifications
-- KB status panel in Settings (Phase 4)
+### Not yet built (confirmed this session)
+- **Diagnostics bar (REQ-013)** - StatusService, IPC channel, StatusBarController, eye icon
+  toggle. Previously listed as complete in CONTEXT.md - this was incorrect. Not built.
+- **CSS custom properties (REQ-021)** - main.css uses entirely hardcoded hex values, pixel
+  sizes, and font names. No `var()` usage anywhere.
+- **Token logging (REQ-020)** - ClaudeService captures elapsed time and character count only.
+  `response.usage` (input_tokens, completion_tokens) is available from the Anthropic SDK
+  but currently discarded.
+- **UserDataService / UserPreferencesService (REQ-018)** - no SQLite, no JSON preferences.
+- **LocalDataService / Scryfall bulk data (REQ-016)** - still using live Scryfall calls.
+- **GeminiService** - Gemini provider defined in requirements but not yet implemented.
+  `LLMProviderFactory` still selects Claude vs. Ollama only.
+
+## Next Session - Implementation Sprint
+
+Agreed build order for the next session(s):
+
+1. **CSS variable refactor** - convert all hardcoded values in `main.css` to CSS custom
+   properties. Single file change, Ctrl+R to verify. Unblocks all future UI work.
+
+2. **UserDataService + UserPreferencesService** - SQLite via `better-sqlite3`, JSON prefs file.
+   Create tables: `decks`, `deck_cards`, `favorites`, `collection`, `llm_usage`.
+   Unblocks token logging, deck saving, and favorites.
+
+3. **Token logging** - read `response.usage.input_tokens` and `response.usage.output_tokens`
+   in `ClaudeService.js` after every API call; write a row to `llm_usage` via UserDataService.
+   Start collecting baseline data immediately.
+
+4. **LocalDataService + Scryfall bulk data** - download `oracle-cards` snapshot to
+   `resources/data/scryfall-bulk/`; refactor `ScryfallProvider` and `CatalogService` to
+   read from local data first. Bundle mana symbol SVGs into `resources/data/symbols/`
+   and remove the `SymbolService` startup network call.
+
+5. **Diagnostics bar** - `StatusService` (main process event emitter), `status-update` IPC
+   push channel, `StatusBarController` (renderer), eye icon toggle, idle timer.
+
+6. **Workshop (Phase 3)** - two-panel layout, deck contract, SUGGESTIONS block parsing,
+   inline pill rendering, wildcard budget, deck save/load. Multi-session effort.
 
 ## Active Work / Known Issues
 
-- Slang card names ("bolt", "goyf") won't match the catalog - requires exact or
-  near-exact name. Acceptable for now.
-- "Write to Lookup" toggle is off by default and not persisted between sessions
-  (resets on restart). Persistence is a settings/config feature (Phase 4).
-- Workshop tab is a placeholder - Phase 3 work.
-- **Card panel layout redesign pending** - the current three-section vertical
-  stack (image → info → meta) wastes horizontal space at full window width.
-  Intended redesign: top half splits into left (card text) and right (card image),
-  bottom half keeps meta section as-is. Documented in REQ-004.
-  Implement before or during Phase 3 since Workshop will share the card panel component.
-- `MAX_CARDS = 10` in CardPanelController is correct and intentional for Card Lookup.
-  Workshop will need its own separate card panel logic when built - these should diverge.
-- **Sticky context on follow-up messages** - when a user sends a correction like "that's wrong,
-  try again" with no MTG vocabulary, MessageIntentService finds no keyword matches and
-  MCPOrchestrator injects no KB context. The LLM is then flying blind. MCPOrchestrator
-  should remember the last injected context and re-use it on follow-ups that generate no
-  new context of their own.
+- Slang card names ("bolt", "goyf") won't match the catalog - requires exact or near-exact
+  name. Acceptable for now.
+- "Write to Lookup" toggle not persisted between sessions (Phase 4).
+- Workshop tab is a placeholder (Phase 3).
+- **Card panel layout redesign pending** - current three-section vertical stack wastes
+  horizontal space. Intended redesign: top half splits left (card text) / right (card image),
+  bottom half keeps meta unchanged. Documented in REQ-004. Implement before or during Phase 3.
+- **Sticky context on follow-up messages** - MCPOrchestrator injects no KB context when a
+  follow-up message has no MTG vocabulary. Fix: cache last injected context and re-use on
+  turns that generate no new context. Documented in REQ-019.
+- `MAX_CARDS = 10` in CardPanelController is intentional for Card Lookup. Workshop will need
+  its own separate list logic - do not reuse CardPanelController there.
+
+## LLM Provider State
+
+- `LLMProviderFactory` currently selects: Claude if `ANTHROPIC_API_KEY` is set, Ollama otherwise.
+- Gemini tier added to requirements (REQ-008) and decisions but `GeminiService` not yet built.
+- When building GeminiService, refactor `LLMProviderFactory` to read `LLM_PROVIDER` env var
+  and select from all three: `claude`, `gemini`, `ollama`.
+- `BaseLLMProvider` abstraction layer needs to be formalized (currently implicit via shared
+  `sendMessage` interface on ClaudeService and OllamaService).
 
 ## File Structure
 
 ```
 MTGHelper/
-- README.md                         Public-facing onboarding doc; rendered on GitHub as the
-                                    repo landing page. Must be kept current - see USERPREFERENCES.md
-- main.js                           Composition root: creates and wires all services, registers
-                                    IpcHandlerRegistry and WindowManager, creates main window
+- README.md                         Public-facing onboarding doc
+- main.js                           Composition root: creates and wires all services
 - preload.js                        contextBridge IPC surface for renderer
 - webpack.config.js                 Bundles src/renderer.js -> dist/renderer.bundle.js
 - package.json
@@ -106,11 +130,14 @@ MTGHelper/
 - resources/knowledge/
   - manifest.json                   Topic index: IDs, keywords, injection flags, source type
   - topics/                         MD files injected into LLM context (5 seeded)
+- resources/data/                   TO BE CREATED - local data layer (REQ-016)
+  - scryfall-bulk/                  oracle-cards.json snapshot (gitignored)
+  - symbols/                        Bundled SVGs (committed)
 - docs/ai-assistant/                This directory
 - src/
   - index.html                      App shell: nav bar + 3 tab panels
   - renderer.js                     Webpack entry - boots AppViewController
-  - styles/main.css
+  - styles/main.css                 All hardcoded values - needs CSS variable refactor
   - controllers/
     - AppViewController.js          Top-level shell: tab switching, pop-out coordination,
                                     card routing between MTG Wizard and Card Lookup
@@ -118,35 +145,25 @@ MTGHelper/
     - LookupViewController.js       Wraps CardPanelController; handles search bar and
                                     relayed cards from chat
     - CardPanelController.js        Card tab bar + 3-section display (image, info, meta)
-    - DeckBuilderViewController.js  Placeholder (Workshop tab - pending rename)
+    - DeckBuilderViewController.js  Placeholder (Workshop tab)
   - ipc/
-    - IpcHandlerRegistry.js         Registers send-message, get-catalog-status, lookup-cards,
-                                    get-llm-info; receives llmService and orchestrator via DI
+    - IpcHandlerRegistry.js         Registers IPC handlers; receives services via DI
     - WindowManager.js              Creates/tracks pop-out windows; pushes card state on load
   - services/
-    - ClaudeService.js              Anthropic API communication; primary LLM provider
-    - OllamaService.js              Ollama/LLM communication; fallback provider (qwen2.5:14b)
-    - LLMProviderFactory.js         Selects LLM provider at startup: Claude if
-                                    ANTHROPIC_API_KEY is set, Ollama otherwise
-    - LogService.js                 Singleton logger; color-coded console output + logs/app.log
-                                    (file wiped on each session start)
-    - CatalogService.js             Loads all ~26k Scryfall card names at startup; provides
-                                    findInMessage() for exact catalog-based name matching
-    - SymbolService.js              Fetches all MTG card symbols from Scryfall at startup;
-                                    caches as data URIs; exposed via get-symbol-map IPC
-    - KnowledgeBaseService.js       Loads topic files from resources/knowledge/ at startup;
-                                    getRelevantContext(intent) returns matched KB sections
-    - MessageIntentService.js       Stateless message analysis; returns intent object with
-                                    KB injection flags and Scryfall routing flags
+    - ClaudeService.js              Anthropic API; primary LLM provider
+    - OllamaService.js              Ollama fallback provider (offline/local only)
+    - LLMProviderFactory.js         Selects LLM at startup (needs Gemini + LLM_PROVIDER refactor)
+    - LogService.js                 Singleton logger; console + logs/app.log
+    - CatalogService.js             ~26k card names at startup; findInMessage() matching
+    - SymbolService.js              Fetches MTG symbols from Scryfall at startup (to be replaced
+                                    by bundled SVGs in resources/data/symbols/)
+    - KnowledgeBaseService.js       Loads KB topics; getRelevantContext(intent)
+    - MessageIntentService.js       Stateless message analysis; returns intent object
     - mcp/
-      - MCPOrchestrator.js          Intent detection, fans out to providers, returns
-                                    {context, cards}; also exposes lookupCards() for direct
-                                    name-based fetch
+      - MCPOrchestrator.js          Intent detection, context assembly, provider fan-out
       - providers/
-        - BaseProvider.js           Interface all providers implement
-        - ScryfallProvider.js       Card data, oracle text, rulings, legality, pricing,
-                                    images; fetchCards() for direct lookup, getContext()
-                                    for LLM-enriched lookup
+        - BaseProvider.js           Interface all data providers implement
+        - ScryfallProvider.js       Card data, oracle text, rulings, legality, pricing, images
 ```
 
 ## IPC Surface (preload.js)
@@ -168,85 +185,44 @@ MTGHelper/
 ## Key Technical Notes
 
 - `"type": "commonjs"` in package.json - main-process files use require/module.exports,
-  renderer files use ES module import/export (handled by webpack with `type: 'javascript/auto'`).
+  renderer files use ES module import/export (Webpack handles with `type: 'javascript/auto'`).
 - `dist/` is gitignored - always regenerated by webpack on npm start.
-- Scryfall catalog uses exact name lookup (`/cards/named?exact=`) since we know the true
-  card name before fetching. Previously used fuzzy search.
-- Double-faced cards don't have top-level image_uris - falls back to
-  card_faces[0].image_uris.normal. Handled in ScryfallProvider._buildCardData.
-- Pop-out windows load the same index.html. AppViewController calls getViewAssignment()
-  IPC at init; WindowManager identifies the window by webContents.id and returns its
-  tab name. Main window returns null (full mode).
-- Pop-out state transfer: WindowManager listens for did-finish-load on the pop-out window,
-  then sends 'send-current-cards' to the main window. AppViewController relays
-  { cards, activeCardId } to the pop-out via relay-cards-to-lookup IPC.
-- Card ordering: first card in the array is always auto-selected when the panel is empty.
-  Subsequent card additions don't change selection. Pop-out overrides selection to
-  match activeCardId after state restore.
-- VS Code shows "File is a CommonJS module; it may be converted to an ES module" hint
-  on main-process .js files. This is a hint only, not an error - safe to ignore.
-- Webpack target is `web` (not `electron-renderer`) because nodeIntegration is false
-  in the renderer BrowserWindow. electron-renderer target assumes Node access and fails.
-- Services use manual constructor injection (no framework). `main.js` is the composition
-  root - the only place that instantiates services and wires dependencies. `LogService` is
-  the accepted exception: a module-level singleton imported directly, which is standard
-  practice for cross-cutting loggers.
-- LLM provider is selected at startup by `LLMProviderFactory`: Claude API if
-  `ANTHROPIC_API_KEY` is set in the environment, Ollama otherwise. Switching providers
-  requires a restart (Phase 4 Settings will handle live switching).
+- Scryfall catalog uses exact name lookup (`/cards/named?exact=`). Previously used fuzzy.
+- Double-faced cards fall back to `card_faces[0].image_uris.normal` - handled in ScryfallProvider.
+- Pop-out windows load the same index.html; AppViewController calls getViewAssignment() at init.
+- Services use manual constructor injection. `main.js` is the composition root. `LogService`
+  is the accepted module-level singleton exception.
+- Webpack target is `web` (not `electron-renderer`) because nodeIntegration is false.
+- VS Code "File is a CommonJS module" hint on main-process files is safe to ignore.
 
 ## Decisions Still Open
 
-- Chat markdown uses innerHTML without sanitization. Acceptable for a single-user
-  desktop app with local LLM, but flag if the app ever handles untrusted content.
-- "Write to Lookup" toggle state not persisted between sessions - tracked as a
-  settings feature in REQ-006 / Phase 4.
-- TCGPlayer pricing comes from Scryfall's embedded data (updated periodically).
-  A direct TCGPlayer API key would give real-time pricing but adds API key management.
+- Chat markdown uses innerHTML without sanitization. Acceptable for single-user desktop app,
+  but flag if the app ever handles untrusted content.
+- "Write to Lookup" toggle state not persisted between sessions (Phase 4).
+- TCGPlayer pricing comes from Scryfall's embedded data. Direct TCGPlayer API would give
+  real-time pricing but adds API key management complexity.
+- History summarization approach (client-side vs. secondary Claude call) - decide after
+  baseline token data is available.
+- Exact sliding window size for conversation history - start at 6-10 turns, tune from data.
 
 ## Implementation Concerns
 
-Foresights and potential complications to keep in mind before reaching the
-relevant phase. Remove an entry once it has been resolved or designed around.
-
-- **Phase 3a - Workshop does not use CardPanelController:** Workshop card
-  areas are compact scrollable lists, not full card detail panels. Do not
-  attempt to reuse CardPanelController here - the layouts are fundamentally
-  different. Workshop will have its own list components managed by
-  WorkshopViewController.
-
-- **Phase 3a - Workshop JSON parsing in MCPOrchestrator:** The LLM response
-  will contain both a readable text portion and a JSON state block. The
-  orchestrator must reliably split these before routing - text to chat,
-  JSON to Workshop panel. The Workshop system prompt must clearly specify the
-  delimiters the LLM should use (e.g. a fenced ```json block) so parsing
-  is consistent. Test edge cases where the LLM omits the block or malforms it.
-
-- **Phase 3a - Workshop system prompt complexity:** The Workshop system prompt
-  must carry the JSON schema spec, the current state document, format rules,
-  and deckbuilding expert framing. This will be the most token-heavy prompt
-  in the app. Monitor context window usage, especially with Ollama's smaller
-  context limits.
-
-- **Phase 3a - LLM format rule accuracy is non-negotiable:** The Workshop
-  presents itself as a deckbuilding expert. Incorrect legality information
-  (wrong ban list, wrong commander rules, wrong deck size) has real consequences
-  for users. The KB topics covering format rules must be comprehensive and
-  current before Workshop is shipped.
-
-- **REQ-008 - Anthropic API key vs. Claude.ai Pro:** These are separate
-  products. A Claude.ai Pro subscription does not grant API access. Users
-  obtain an API key from console.anthropic.com billed by token. The Settings
-  UI must make this clear with a brief explainer to avoid user confusion.
-
-- **REQ-011 - WotC Comprehensive Rules parsing:** The rules document is
-  ~280,000 words with its own internal section numbering and formatting. Parsing
-  it into clean topic files is non-trivial. The document format could change
-  between WotC releases. Do not underestimate this work - budget time for
-  a robust parser and test against multiple versions of the document.
-
-- **REQ-011 - sources/ populated on first run:** A fresh clone has no
-  sources/ directory content (gitignored). The app must handle the case where
-  source documents haven't been fetched yet - either run ContentManagerService
-  automatically on first launch, or ensure the seeded topics/ files are used
-  as fallback until the first refresh completes.
+- **Workshop: do not reuse CardPanelController** - Workshop card areas are compact scrollable
+  lists, not full card detail panels. WorkshopViewController owns its own list components.
+- **Workshop: SUGGESTIONS block parsing** - MCPOrchestrator must reliably split prose from
+  the SUGGESTIONS block before routing. Test edge cases where Claude omits or malforms it.
+- **Workshop: system prompt token pressure** - the Workshop prompt carries contract, deck
+  state, format rules, and behavioral guidelines. It will be the heaviest prompt in the app.
+  Monitor context window usage carefully.
+- **Workshop: format rule accuracy is non-negotiable** - incorrect ban list, commander rules,
+  or deck size has real consequences. KB format topics must be comprehensive before Workshop ships.
+- **REQ-011 - WotC Comprehensive Rules parsing** - ~280,000 words with internal section
+  numbering. Parsing is non-trivial; document format may change between releases.
+- **REQ-011 - sources/ on fresh clone** - gitignored, so empty on first clone. App must
+  handle missing sources gracefully and use seeded topics/ as fallback.
+- **LocalDataService - bulk data first run** - fresh clone has no oracle-cards.json.
+  App must trigger a background download on first launch and use live Scryfall as fallback
+  until local data is populated.
+- **GeminiService - structured output** - Gemini's response format differs from Anthropic's.
+  The Workshop SUGGESTIONS block parsing must be tested against Gemini output specifically.
