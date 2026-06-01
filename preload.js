@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('mtgHelper', {
   relayCardsToLookup:   (payload)          => ipcRenderer.invoke('relay-cards-to-lookup', payload),
   lookupCards:          (query)            => ipcRenderer.invoke('lookup-cards', query),
   getLlmInfo:           ()                 => ipcRenderer.invoke('get-llm-info'),
+  getSymbolMap:         ()                 => ipcRenderer.invoke('get-symbol-map'),
   onTabReturned:        (cb) => ipcRenderer.on('tab-returned',       (_, tabName) => cb(tabName)),
   onCardsFromChat:      (cb) => ipcRenderer.on('cards-from-chat',    (_, payload) => cb(payload)),
   onSendCurrentCards:   (cb) => ipcRenderer.on('send-current-cards', ()           => cb()),

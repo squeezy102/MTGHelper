@@ -516,6 +516,13 @@ body {
 .card-info-mana { color: #aaa; font-size: 0.8rem; flex-shrink: 0; }
 .card-type { color: #aaa; font-style: italic; }
 .card-oracle { color: #e0e0e0; line-height: 1.5; }
+
+.mana-symbol {
+  height: 1em;
+  width: 1em;
+  vertical-align: middle;
+  display: inline-block;
+}
 .card-pt { font-weight: bold; color: #e0e0e0; text-align: right; display: block; }
 .card-flavor { color: #777; font-style: italic; font-size: 0.78rem; border-left: 2px solid #333; padding-left: 8px; line-height: 1.4; }
 .card-artist { color: #555; font-size: 0.75rem; }

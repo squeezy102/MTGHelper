@@ -5,7 +5,7 @@ Running notes for AI assistant continuity across sessions.
 ## Repository State
 
 - **Branch:** `dev` (all active development; merge to `master` at stable milestones only)
-- **Last commit:** `46059fe` - "Add message source header and clean up LLM disclosure UX"
+- **Last commit:** `d0d08ab` - "Implement mana symbol rendering (REQ-007) and document card panel layout redesign"
 - **Uncommitted changes:** None
 
 ## Current App State
@@ -43,14 +43,15 @@ Phase 1 is complete. Phase 2 (Lookup Tab) is in progress and partially built.
 - **Meta block borders** - each `.meta-block` now has a subtle border, border-radius,
   and padding to visually separate the four cells in the meta section
 - **Lookup auto-focus** - switching to the Card Lookup tab automatically focuses the search input
+- **Mana symbol rendering (REQ-007)** - `SymbolService` fetches all card symbols from Scryfall
+  at startup and caches them as data URIs; `CardPanelController._renderSymbols()` replaces
+  `{X}` notation with inline `<img>` tags in mana cost and oracle text fields.
+  Symbol map flows: `main.js` → IPC `get-symbol-map` → `AppViewController` → `LookupViewController`
+  → `CardPanelController`. Falls back to raw text if a symbol fails to load.
 
 ### Phase 2 gaps (not yet built)
-- Batch import from a deck list (paste, rate-limited fetch)
-- No hard cap on Card Lookup cards - `MAX_CARDS = 10` constant still present in
-  `CardPanelController.js` and needs to be removed/bypassed for the Card Lookup tab
+- Batch import from a deck list - moved to Workshop tab scope
 - LLM response card matching (REQ-009) - scoped to Workshop tab; not yet built
-- Mana symbol rendering (REQ-007) - oracle text and mana costs display raw shorthand
-  ({B}, {T}, etc.) instead of official WotC SVG icons
 
 ### Phase 2b features (committed - KB structure and injection pipeline)
 - `resources/knowledge/` directory: `manifest.json` + 5 seeded topic files in `topics/`
@@ -76,11 +77,13 @@ Phase 1 is complete. Phase 2 (Lookup Tab) is in progress and partially built.
 - "Write to Lookup" toggle is off by default and not persisted between sessions
   (resets on restart). Persistence is a settings/config feature (Phase 4).
 - Workshop tab is a placeholder - Phase 3 work.
-- Mana symbols in oracle text and mana cost fields currently render as raw
-  shorthand notation ({B}, {T}, etc.). REQ-007 tracks replacement with
-  official WotC SVG icons. Scryfall's card symbol endpoint is the intended source.
-- `MAX_CARDS = 10` in CardPanelController needs to be removed for Card Lookup tab per REQ-004.
-  When Deck Builder is built it may need its own cap logic - these should diverge.
+- **Card panel layout redesign pending** - the current three-section vertical
+  stack (image → info → meta) wastes horizontal space at full window width.
+  Intended redesign: top half splits into left (card text) and right (card image),
+  bottom half keeps meta section as-is. Documented in REQ-004.
+  Implement before or during Phase 3 since Workshop will share the card panel component.
+- `MAX_CARDS = 10` in CardPanelController is correct and intentional for Card Lookup.
+  Workshop will need its own separate card panel logic when built - these should diverge.
 - **Sticky context on follow-up messages** - when a user sends a correction like "that's wrong,
   try again" with no MTG vocabulary, MessageIntentService finds no keyword matches and
   MCPOrchestrator injects no KB context. The LLM is then flying blind. MCPOrchestrator
@@ -129,6 +132,8 @@ MTGHelper/
                                     (file wiped on each session start)
     - CatalogService.js             Loads all ~26k Scryfall card names at startup; provides
                                     findInMessage() for exact catalog-based name matching
+    - SymbolService.js              Fetches all MTG card symbols from Scryfall at startup;
+                                    caches as data URIs; exposed via get-symbol-map IPC
     - KnowledgeBaseService.js       Loads topic files from resources/knowledge/ at startup;
                                     getRelevantContext(intent) returns matched KB sections
     - MessageIntentService.js       Stateless message analysis; returns intent object with
@@ -155,6 +160,7 @@ MTGHelper/
 | `relayCardsToLookup(payload)` | renderer → main | Send cards from assistant/main to lookup pop-out |
 | `lookupCards(query)` | renderer → main | Manual search; returns `CardData[]` |
 | `getLlmInfo()` | renderer → main | Returns `{ displayName }` of active LLM provider |
+| `getSymbolMap()` | renderer → main | Returns symbol code → data URI map for mana symbol rendering |
 | `onTabReturned(cb)` | main → renderer | Event: pop-out window was closed |
 | `onCardsFromChat(cb)` | main → renderer | Event: cards relayed to lookup window |
 | `onSendCurrentCards(cb)` | main → renderer | Event: pop-out asking main to relay card state |
@@ -203,12 +209,30 @@ MTGHelper/
 Foresights and potential complications to keep in mind before reaching the
 relevant phase. Remove an entry once it has been resolved or designed around.
 
-- **Phase 3a - Dual CardPanelController in Workshop:** The split-pane
-  layout requires two independent card panels running simultaneously (one for
-  user-side cards, one for AI-side cards). CardPanelController is already
-  self-contained so instantiating two should be clean, but both panels will
-  need distinct DOM element IDs and the Workshop view will need to manage
-  them without letting them bleed into each other.
+- **Phase 3a - Workshop does not use CardPanelController:** Workshop card
+  areas are compact scrollable lists, not full card detail panels. Do not
+  attempt to reuse CardPanelController here - the layouts are fundamentally
+  different. Workshop will have its own list components managed by
+  WorkshopViewController.
+
+- **Phase 3a - Workshop JSON parsing in MCPOrchestrator:** The LLM response
+  will contain both a readable text portion and a JSON state block. The
+  orchestrator must reliably split these before routing - text to chat,
+  JSON to Workshop panel. The Workshop system prompt must clearly specify the
+  delimiters the LLM should use (e.g. a fenced ```json block) so parsing
+  is consistent. Test edge cases where the LLM omits the block or malforms it.
+
+- **Phase 3a - Workshop system prompt complexity:** The Workshop system prompt
+  must carry the JSON schema spec, the current state document, format rules,
+  and deckbuilding expert framing. This will be the most token-heavy prompt
+  in the app. Monitor context window usage, especially with Ollama's smaller
+  context limits.
+
+- **Phase 3a - LLM format rule accuracy is non-negotiable:** The Workshop
+  presents itself as a deckbuilding expert. Incorrect legality information
+  (wrong ban list, wrong commander rules, wrong deck size) has real consequences
+  for users. The KB topics covering format rules must be comprehensive and
+  current before Workshop is shipped.
 
 - **REQ-008 - Anthropic API key vs. Claude.ai Pro:** These are separate
   products. A Claude.ai Pro subscription does not grant API access. Users

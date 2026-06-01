@@ -52,6 +52,9 @@ Preferences and working style guidance for AI assistant sessions on this project
   - `docs/short-description` - documentation only
   - `chore/short-description` - maintenance, cleanup, dependency updates
 - Always suggest the correct branch name prefix when starting new work
+- Branches are short-lived: checkout from dev, do the work, PR it, branch is deleted on merge
+- Never work directly on dev or master - always on a feature branch
+- At the start of every session, suggest the appropriate branch name before any work begins
 
 ## Documentation
 

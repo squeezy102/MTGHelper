@@ -21,9 +21,10 @@ const ARENA_FORMATS = {
 };
 
 class CardPanelController {
-  constructor() {
+  constructor(symbolMap = {}) {
     this.cards = [];
     this.activeCardId = null;
+    this.symbolMap    = symbolMap;
     this.tabsBar      = document.getElementById('cardTabsBar');
     this.imageSection = document.getElementById('cardImageSection');
     this.infoSection  = document.getElementById('cardInfoSection');
@@ -136,10 +137,10 @@ class CardPanelController {
     this.infoSection.innerHTML = `
       <div class="card-info-header">
         <span class="card-info-name">${this._esc(card.name)}</span>
-        ${card.manaCost ? `<span class="card-info-mana">${this._esc(card.manaCost)}</span>` : ''}
+        ${card.manaCost ? `<span class="card-info-mana">${this._renderSymbols(card.manaCost)}</span>` : ''}
       </div>
       <div class="card-type">${this._esc(card.typeLine)}</div>
-      ${card.oracleText ? `<div class="card-oracle">${this._esc(card.oracleText)}</div>` : ''}
+      ${card.oracleText ? `<div class="card-oracle">${this._renderSymbols(card.oracleText)}</div>` : ''}
       ${pt}
       ${flavor}
       ${artist}
@@ -228,6 +229,37 @@ class CardPanelController {
     if (!rulings || rulings.length === 0) return '';
     const items = rulings.map(r => `<li>${this._esc(r)}</li>`).join('');
     return `<div class="meta-block meta-block--full"><div class="meta-label">Rulings</div><ul class="rulings-list">${items}</ul></div>`;
+  }
+
+  _renderSymbols(text) {
+    if (!text) return '';
+    const symbolRegex = /\{[^}]+\}/g;
+    let result = '';
+    let lastIndex = 0;
+    let match;
+
+    while ((match = symbolRegex.exec(text)) !== null) {
+      result += this._escNoNewline(text.slice(lastIndex, match.index));
+      const symbol = match[0];
+      if (this.symbolMap[symbol]) {
+        result += `<img class="mana-symbol" src="${this.symbolMap[symbol]}" alt="${symbol}" title="${symbol}" />`;
+      } else {
+        result += this._escNoNewline(symbol);
+      }
+      lastIndex = match.index + match[0].length;
+    }
+
+    result += this._escNoNewline(text.slice(lastIndex));
+    return result.replace(/\n/g, '<br>');
+  }
+
+  _escNoNewline(str) {
+    if (!str) return '';
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   _esc(str) {
