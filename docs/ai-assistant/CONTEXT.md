@@ -75,8 +75,8 @@ it was entirely design and documentation. The next session begins implementation
   but currently discarded.
 - **UserDataService / UserPreferencesService (REQ-018)** - no SQLite, no JSON preferences.
 - **LocalDataService / Scryfall bulk data (REQ-016)** - still using live Scryfall calls.
-- **GeminiService** - Gemini provider defined in requirements but not yet implemented.
-  `LLMProviderFactory` still selects Claude vs. Ollama only.
+- **GeminiService** - implemented (`gemini-2.0-flash`). `LLMProviderFactory` now routes
+  all three providers via `LLM_PROVIDER` env var.
 
 ## Implementation Sprint - Build Order
 
@@ -125,12 +125,12 @@ Agreed build order. None of the items below are started yet.
 
 ## LLM Provider State
 
-- `LLMProviderFactory` currently selects: Claude if `ANTHROPIC_API_KEY` is set, Ollama otherwise.
-- Gemini tier added to requirements (REQ-008) and decisions but `GeminiService` not yet built.
-- When building GeminiService, refactor `LLMProviderFactory` to read `LLM_PROVIDER` env var
-  and select from all three: `claude`, `gemini`, `ollama`.
+- `LLMProviderFactory` reads `LLM_PROVIDER` env var (`claude`, `gemini`, `ollama`).
+  Falls back to auto-detection from available API keys; Ollama is the final fallback.
+- All three providers implemented: `ClaudeService`, `GeminiService`, `OllamaService`.
+- `GeminiService` uses `gemini-2.0-flash` via `@google/generative-ai`.
 - `BaseLLMProvider` abstraction layer needs to be formalized (currently implicit via shared
-  `sendMessage` interface on ClaudeService and OllamaService).
+  `sendMessage` interface on all three services).
 
 ## File Structure
 
