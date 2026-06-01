@@ -52,7 +52,7 @@ must stay current. See the callout at the top of this file.
 | [Node.js LTS](https://nodejs.org) | JavaScript runtime | https://nodejs.org |
 | [VS Code](https://code.visualstudio.com) | Code editor | https://code.visualstudio.com |
 | [Claude Code](https://claude.com/claude-code) *(optional)* | AI coding tool - how I build this project | https://claude.com/claude-code |
-| [Ollama](https://ollama.com) *(optional)* | Free local LLM - runs the app without an API key | https://ollama.com |
+| [Ollama](https://ollama.com) *(optional)* | Local/offline LLM - runs entirely on your machine, no internet required after setup. Quality is significantly degraded vs. cloud providers. | https://ollama.com |
 
 If you are following my approach with Claude Code, you do not need to know JavaScript, Electron, or any other technology to contribute.
 
@@ -75,49 +75,65 @@ npm install
 
 ### 3. Set up your LLM
 
-MTG Helper supports two LLM backends. You only need one.
+MTG Helper supports three LLM providers. You only need one.
 
-**A word on quality:** Claude is significantly better than Ollama for this use case. If you are
-getting incorrect rules explanations, weak card suggestions, or generally unsatisfying responses,
-it is almost certainly because you are using Ollama. The local models it runs are free but limited
-- they struggle with complex MTG rule interactions in a way that Claude does not. Claude is the
-intended experience.
+**Supported LLM Providers**
 
-**API costs are your own responsibility.** This project does not cover or reimburse Anthropic API
-usage for contributors. Token usage on the Claude API is billed directly to the account that owns
-the key. Usage during normal development and testing is modest, but you are responsible for
-whatever you spend.
+MTGHelper is designed and optimized for the Anthropic Claude API. This is the only
+provider that delivers the full intended experience and is strongly recommended.
+
+**Gemini** (Google AI Studio) is supported as a free alternative for contributors.
+A free API key requires no credit card. Response quality is good but some behavioral
+variance from Claude should be expected.
+
+**Ollama** is supported for users who require fully local, offline operation. Be
+aware: Ollama's open-weight models are significantly less capable than Claude or
+Gemini for this use case. Rules interpretation, deck building reasoning, and
+structured output reliability will all be noticeably degraded. If you can use
+Claude or Gemini, you should.
+
+**API costs are your own responsibility.** This project does not cover or reimburse
+API usage for contributors. Usage during normal development and testing is modest,
+but you are responsible for whatever you spend.
 
 ---
 
 **Option A - Claude API (Anthropic) - recommended**
 
 1. Get an API key from https://console.anthropic.com
-   - This requires an Anthropic account. Usage is billed per token to your account.
+   - Usage is billed per token to your account.
    - A Claude.ai Pro subscription does NOT include API access - these are separate products.
-2. Set the key as a Windows environment variable:
-   - Open Start, search "environment variables", click "Edit the system environment variables"
-   - Click "Environment Variables..."
-   - Under "User variables", click New
-   - Variable name: `ANTHROPIC_API_KEY`
-   - Variable value: your key (starts with `sk-ant-...`)
-   - Click OK, then restart VS Code and any open terminals
+2. Set these as Windows environment variables (Start → "Edit the system environment variables" → Environment Variables → User variables → New):
+   - `LLM_PROVIDER` = `claude`
+   - `ANTHROPIC_API_KEY` = your key (starts with `sk-ant-...`)
+3. Restart VS Code and any open terminals.
 
-**Never put your API key in a file inside the project folder.** Always use environment variables
-for credentials.
+**Never put your API key in a file inside the project folder.** Always use environment variables.
 
 ---
 
-**Option B - Ollama (free, local, no account required)**
+**Option B - Gemini (Google AI Studio) - free, no credit card required**
 
-Use this if you cannot or do not want to use the Claude API. Expect noticeably weaker responses,
-particularly for rules questions and deck building suggestions.
+1. Get a free API key from https://aistudio.google.com
+2. Set these as Windows environment variables:
+   - `LLM_PROVIDER` = `gemini`
+   - `GEMINI_API_KEY` = your key
+3. Restart VS Code and any open terminals.
+
+---
+
+**Option C - Ollama (local/offline only)**
+
+Use this only if you specifically need offline operation and accept significantly
+degraded response quality.
 
 1. Install Ollama from https://ollama.com
 2. Run: `ollama pull qwen2.5:14b`
+3. Set this as a Windows environment variable:
+   - `LLM_PROVIDER` = `ollama`
+4. Restart VS Code and any open terminals.
 
-Ollama runs as a background service automatically after install. The app falls back to Ollama
-automatically when no `ANTHROPIC_API_KEY` environment variable is set.
+Ollama runs as a background service automatically after install.
 
 ### 4. Run the app
 
@@ -214,7 +230,7 @@ Reading it is the fastest way to understand what has been built and what is plan
 | File | Contents |
 |---|---|
 | [CONTEXT.md](docs/ai-assistant/CONTEXT.md) | Current app state, file structure, IPC surface, known issues |
-| [REQUIREMENTS.md](docs/ai-assistant/REQUIREMENTS.md) | Feature requirements (REQ-001 through REQ-012) |
+| [REQUIREMENTS.md](docs/ai-assistant/REQUIREMENTS.md) | Feature requirements (REQ-001 through REQ-021) |
 | [ROADMAP.md](docs/ai-assistant/ROADMAP.md) | Build phases and what is planned next |
 | [DECISIONS.md](docs/ai-assistant/DECISIONS.md) | Architecture and product decisions with rationale |
 | [SETUP.md](docs/ai-assistant/SETUP.md) | Detailed environment setup notes |

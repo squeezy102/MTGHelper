@@ -395,26 +395,60 @@ Scryfall in production.
 
 ## REQ-008: Multi-LLM Provider Support
 
-The application must support multiple LLM backends, selectable by the user.
+The application supports multiple LLM backends selected via environment variable.
+A `BaseLLMProvider` interface with concrete implementations per provider allows
+the app to be pointed at any supported LLM with no code changes required.
 
-### Providers (initial target)
-- **Ollama (local)** - current default; free, private, no API key required
-- **Claude (Anthropic API)** - user supplies their own Anthropic API key;
-  billed per token against their Anthropic account
+### Provider Hierarchy
+
+**Tier 1 - Claude (Anthropic API) - canonical**
+The app is designed, optimized, and tested against Claude. All prompt engineering,
+structured output formatting, anti-sycophancy behavior, and deck contract logic are
+tuned for Claude. This is the only provider that delivers the full intended experience.
+Recommended for all real use.
+
+**Tier 2 - Gemini (Google AI Studio) - free cloud fallback**
+Google AI Studio provides a free API key with no credit card required. Genuinely
+capable model - the strongest free cloud option available. Recommended for
+contributors and collaborators who don't want to pay for API access. Some prompt
+tuning may be required to match Claude's behavior on structured outputs and
+anti-sycophancy.
+
+**Tier 3 - Ollama (local/offline only)**
+Runs entirely on the user's machine. No traffic ever leaves the device after the
+initial model download. This is its only meaningful advantage. Response quality is
+significantly degraded compared to Tier 1 and Tier 2 - open-weight models on
+consumer hardware cannot reliably handle nuanced rules interpretation, coherent
+multi-turn deck building, or structured output. Retained for users who specifically
+require offline capability and consciously accept the quality tradeoff. Users who
+choose Ollama must be warned explicitly in the UI.
 
 ### Configuration
-- Provider selection is managed in the Settings dialogue (REQ-006)
-- Switching providers does not require an app restart
+```
+LLM_PROVIDER=claude
+ANTHROPIC_API_KEY=their_key
+```
+or
+```
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=their_key
+```
+
+- Provider is selected via the `LLM_PROVIDER` environment variable
 - API keys live in OS environment variables only - never stored by the application
   in any settings panel, config file, or database field
+- Provider selection in Settings (REQ-006) updates the env var guidance; it does
+  not store the key itself
+- Switching providers requires a restart
 
 ### Notes
 - An Anthropic API key is separate from a Claude.ai Pro subscription - users
-  obtain it from console.anthropic.com. The settings UI should make this clear
-  with a brief explainer and a link.
-- OllamaService should be refactored into a provider pattern consistent with
-  the MCP provider architecture so new LLM backends can be added by extension,
-  not modification
+  obtain it from console.anthropic.com. The settings UI must make this clear.
+- A Gemini API key is obtained from Google AI Studio (aistudio.google.com) -
+  free tier, no credit card required.
+- `OllamaService` is refactored into the `BaseLLMProvider` pattern alongside
+  `ClaudeService` and the new `GeminiService` so providers are added by
+  extension, not modification
 
 ---
 
