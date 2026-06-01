@@ -5,7 +5,7 @@ Running notes for AI assistant continuity across sessions.
 ## Repository State
 
 - **Branch:** `dev` (all active development; merge to `master` at stable milestones only)
-- **Last commit:** `46059fe` - "Add message source header and clean up LLM disclosure UX"
+- **Last commit:** `d0d08ab` - "Implement mana symbol rendering (REQ-007) and document card panel layout redesign"
 - **Uncommitted changes:** None
 
 ## Current App State
@@ -209,12 +209,30 @@ MTGHelper/
 Foresights and potential complications to keep in mind before reaching the
 relevant phase. Remove an entry once it has been resolved or designed around.
 
-- **Phase 3a - Dual CardPanelController in Workshop:** The split-pane
-  layout requires two independent card panels running simultaneously (one for
-  user-side cards, one for AI-side cards). CardPanelController is already
-  self-contained so instantiating two should be clean, but both panels will
-  need distinct DOM element IDs and the Workshop view will need to manage
-  them without letting them bleed into each other.
+- **Phase 3a - Workshop does not use CardPanelController:** Workshop card
+  areas are compact scrollable lists, not full card detail panels. Do not
+  attempt to reuse CardPanelController here - the layouts are fundamentally
+  different. Workshop will have its own list components managed by
+  WorkshopViewController.
+
+- **Phase 3a - Workshop JSON parsing in MCPOrchestrator:** The LLM response
+  will contain both a readable text portion and a JSON state block. The
+  orchestrator must reliably split these before routing - text to chat,
+  JSON to Workshop panel. The Workshop system prompt must clearly specify the
+  delimiters the LLM should use (e.g. a fenced ```json block) so parsing
+  is consistent. Test edge cases where the LLM omits the block or malforms it.
+
+- **Phase 3a - Workshop system prompt complexity:** The Workshop system prompt
+  must carry the JSON schema spec, the current state document, format rules,
+  and deckbuilding expert framing. This will be the most token-heavy prompt
+  in the app. Monitor context window usage, especially with Ollama's smaller
+  context limits.
+
+- **Phase 3a - LLM format rule accuracy is non-negotiable:** The Workshop
+  presents itself as a deckbuilding expert. Incorrect legality information
+  (wrong ban list, wrong commander rules, wrong deck size) has real consequences
+  for users. The KB topics covering format rules must be comprehensive and
+  current before Workshop is shipped.
 
 - **REQ-008 - Anthropic API key vs. Claude.ai Pro:** These are separate
   products. A Claude.ai Pro subscription does not grant API access. Users
