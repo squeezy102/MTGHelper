@@ -29,16 +29,18 @@ set it up for success so the hallucinations, drift, and churn are dramatically r
 
 ---
 
-## This is an AI-coded project
+## How this project is built
 
-**No coding knowledge is required to contribute.**
+This project is built primarily using [Claude Code](https://claude.com/claude-code) - Anthropic's
+AI coding tool. I describe what I want, Claude Code writes the code, and I review and test the result.
+I don't write any code manually.
 
-All code in this repository is written by [Claude Code](https://claude.com/claude-code) - Anthropic's
-AI coding tool. No developer here manually writes code. You describe what you want, Claude Code
-builds it, and you submit the result.
+You don't have to work that way. Manual coding is welcome. So is any other AI-assisted tool -
+Copilot, Cursor, Gemini, whatever you prefer. The setup and contribution guide below describes
+my approach. If you work differently, adapt it to your workflow.
 
-If you want to contribute, all you need is the tools listed below, a Claude account, and a clear
-idea of what you want to add or fix.
+The only non-negotiable is the documentation. Whatever approach you use, `docs/ai-assistant/`
+must stay current. See the callout at the top of this file.
 
 ---
 
@@ -49,10 +51,10 @@ idea of what you want to add or fix.
 | [Git](https://git-scm.com) | Version control | https://git-scm.com |
 | [Node.js LTS](https://nodejs.org) | JavaScript runtime | https://nodejs.org |
 | [VS Code](https://code.visualstudio.com) | Code editor | https://code.visualstudio.com |
-| [Claude Code](https://claude.com/claude-code) | AI coding tool (does the actual coding) | https://claude.com/claude-code |
+| [Claude Code](https://claude.com/claude-code) *(optional)* | AI coding tool - how I build this project | https://claude.com/claude-code |
 | [Ollama](https://ollama.com) *(optional)* | Free local LLM - runs the app without an API key | https://ollama.com |
 
-You do not need to know JavaScript, Electron, or any other technology to contribute.
+If you are following my approach with Claude Code, you do not need to know JavaScript, Electron, or any other technology to contribute.
 
 ---
 
@@ -164,27 +166,27 @@ Never commit directly to `dev` or `master` - always work on a branch and submit 
 Branches are short-lived: one branch per piece of work, deleted automatically when the PR merges.
 New work always means a new branch checked out fresh from `dev`.
 
-### 2. Open the project in VS Code and launch Claude Code
+### 2. Load the project documentation
 
-Open the project folder in VS Code. Launch Claude Code from the terminal or the VS Code extension.
+Before starting any session, make sure your tool has read the project documentation:
 
-Before starting any session, tell Claude Code to read the project documentation:
-
+If using Claude Code:
 > "Read the .md files in docs/ai-assistant/ before we start."
 
-This gives Claude Code the full context of the project - architecture decisions, requirements,
-naming conventions, and current state. It is the source of truth for the project.
+If coding manually or with a different tool, read through `docs/ai-assistant/` yourself - especially
+`CONTEXT.md`, `REQUIREMENTS.md`, and `DECISIONS.md`. These files are the source of truth for the
+project: what has been built, why decisions were made, and what is planned next.
 
-### 3. Describe what you want to build
+### 3. Build the change
 
-Tell Claude Code what you want in plain language. Examples:
+Tell your AI tool what you want, or write the code yourself. If using Claude Code:
 
 - "The card lookup tab should support batch import from a pasted deck list"
 - "Mana symbols like {B} and {T} should render as icons instead of text"
 - "There's a bug where the search bar doesn't clear after submitting"
 
 Claude Code will ask clarifying questions, explain its approach, and make the changes. You review
-and test. You don't write any code yourself.
+and test.
 
 ### 4. Test it
 

@@ -50,30 +50,70 @@ in verified, source-traceable facts.
 
 ---
 
-## Phase 3a - Workshop: Card and Conversation Layer
+## Cross-cutting: Diagnostics Bar
 
-Build the split-pane collaborative workspace.
+A real-time status display that keeps the user informed across all phases.
+Built as a standalone feature, not tied to a specific phase.
 
-- Split-pane layout: user side (input, cards, deck area) / AI side (responses, suggested cards, AI working deck)
-- Card matching on both sides of conversation per REQ-009
-- LLM maintains a working deck proposal the user can approve from or copy
-- AI can generate MTGA-compatible import strings
-- Cards addable to user deck from either pane
-- Conversational context scoped to deck building (system prompt tuned)
+- [x] `StatusService` - main process event emitter; services call `StatusService.emit()`
+- [x] `status-update` IPC push channel (main → renderer)
+- [x] `StatusBarController` - single-line bottom bar, idle timer, toggle state
+- [x] Eye icon toggle: "Diagnostics on" / "Diagnostics off", bar collapses when off
+- [x] Status calls wired into all services: CatalogService, SymbolService,
+  KnowledgeBaseService, LLMProviderFactory, MCPOrchestrator, ScryfallProvider
+- [ ] Persistent toggle preference via Settings (Phase 4)
 
-**Requirements covered:** REQ-005 (partial - conversational layer), REQ-009
+**Requirements covered:** REQ-013
 
 ---
 
-## Phase 3b - Workshop: Deck Management Tools
+## Cross-cutting: Card Tooltip Service
 
-Build the deck management and analysis tools on top of the Phase 3a foundation.
+Shared hover tooltip infrastructure used by Workshop initially, adoptable by
+all other views without rework.
 
-- Full deck list with card counts, totals, add/remove/adjust
-- Import / export in MTGA format
-- Mana curve, creature vs. spell, color breakdown
-- MTGA personal library storage and owned card indicators
-- Custom deck save / load
+- [ ] `CardTooltipController` - single shared controller, one floating `<div>`
+  at document level
+- [ ] Hover listeners wired to any card row with `data-card-image` attribute
+- [ ] Viewport-aware positioning (clamps to screen edges)
+- [ ] Integrated into Workshop card list areas (Phase 3a)
+- [ ] Future: MTG Wizard bolded card names, Card Lookup rows
+
+**Requirements covered:** REQ-014
+
+---
+
+## Phase 3a - Workshop: Card and Conversation Layer
+
+Build the three-area collaborative workspace with live JSON state management.
+
+- [ ] Three-area layout: left player area | center chat | right LLM area (resizable)
+- [ ] Workshop state JSON document: `user_deck`, `user_referenced`, `llm_deck`,
+  `llm_referenced`, `llm_notes`
+- [ ] Format selection at session start; injected into system prompt
+- [ ] Workshop system prompt: deckbuilding expert, format rules, JSON contract spec
+- [ ] MCPOrchestrator Workshop mode: inject state JSON, parse LLM JSON response block,
+  route structured data to Workshop panel and readable text to chat
+- [ ] Left panel: *In Discussion* list + *My Deck* list with +/- controls
+- [ ] Right panel: *In Discussion* list + *LLM's Deck* list + *Deck Intent* notes area
+- [ ] User actions: promote card to deck, adjust count, remove card, copy from LLM
+- [ ] CatalogService runs on user messages → populates `user_referenced`
+- [ ] MTGA plain text import/export for user's deck
+- [ ] Card tooltip integration (REQ-014)
+
+**Requirements covered:** REQ-005 (partial - conversational layer), REQ-009, REQ-014
+
+---
+
+## Phase 3b - Workshop: Deck Stats and Storage
+
+Build the deck analysis tools and persistence on top of the Phase 3a foundation.
+
+- [ ] Deck stats for user's committed deck: total count, mana curve bar chart,
+  creature vs. spell breakdown, color distribution, land ratio, power spike
+- [ ] Custom deck save / load (named decks, persisted locally)
+- [ ] Collection integration once REQ-015 is built: owned card indicators,
+  "suggest owned cards only" toggle
 
 **Requirements covered:** REQ-005 (complete)
 
@@ -106,9 +146,21 @@ Allow the user to choose their LLM backend and configure credentials.
 
 ---
 
+## Phase 6 - Collection Manager Tab
+
+A dedicated fourth tab for personal MTGA card collection management.
+
+- [ ] Collection import from MTGA exporter tool (CSV, JSON, plain text)
+- [ ] Owned card tracking with quantities
+- [ ] Workshop integration: owned card indicators in deck lists
+- [ ] "Suggest owned cards only" toggle surfaced in Workshop and Settings
+
+**Requirements covered:** REQ-015
+
+---
+
 ## Future / Unscheduled
 
 - Additional data providers beyond Scryfall (e.g. EDHRec, MTGGoldfish)
-- Deck suggestions / AI-assisted deck building via the Assistant
 - Format legality checker against a saved deck
 - Price tracking over time

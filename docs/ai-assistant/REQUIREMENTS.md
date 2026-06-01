@@ -119,55 +119,150 @@ full-width text fields.
 
 ## REQ-005: Workshop Tab
 
-A collaborative, split-pane workspace for card exploration and deck building
+A collaborative, three-area workspace for card exploration and deck building
 with an AI partner. The experience is modeled after sitting across a table from
-a master deckbuilder - both sides are visible and actionable simultaneously.
+a master deckbuilder - both sides are visible and actionable simultaneously,
+with the AI conversation in the center.
 
 ### Layout
-The tab uses a split-pane design:
-- **Left pane (Player side)** - user's input and conversation, cards the user
-  is exploring or has proposed, and the user's active deck project (card list,
-  counts, mana curve, creature/spell ratio, land ratios)
-- **Right pane (AI side)** - LLM responses, cards the AI is suggesting, and
-  the AI's working deck proposal
 
-### Card Surfacing
-- Card matching runs on both sides of the conversation per REQ-009
-- Cards found in the user's message populate the left card area
-- Cards found in the LLM's response populate the right card area
-- Both use the full card detail panel (image, info, meta)
+Three resizable areas side by side:
 
-### AI Working Deck
-The LLM maintains its own working deck proposal during the session. The user can:
-- View the AI's working deck at any time
-- Approve individual card suggestions from the AI's area into their own deck
-- Dismiss suggestions they don't want
-- Copy the AI's full working deck into their own deck area
+- **Left - Player Area** - two sections stacked vertically:
+  - *In Discussion* - cards the user has mentioned in conversation that have
+    not yet been added to their deck (compact scrollable list)
+  - *My Deck* - cards committed to the user's working deck (compact scrollable
+    list with counts and +/- controls)
+- **Center - Chat** - full conversation interface: message input, AI responses
+  with markdown rendering, conversation history. Same chat experience as MTG
+  Wizard but with a Workshop-specific system prompt (see Format and Rules below)
+- **Right - LLM Area** - two sections stacked vertically:
+  - *In Discussion* - cards the LLM is currently referencing in conversation
+    (compact scrollable list)
+  - *LLM's Deck* - cards committed to the LLM's working deck proposal (compact
+    scrollable list with counts)
+  - *Deck Intent* - a small text area displaying the LLM's current notes on
+    the deck being built (theme, win condition, strategy summary)
+
+Card rows in all four list areas are compact (name + count only). Hovering
+over any card row displays a card image tooltip (REQ-014). No full card detail
+panels are used in the Workshop - Card Lookup serves that need.
+
+### Workshop State - JSON Contract
+
+The Workshop maintains a shared state document in JSON format. This document
+is injected into every message sent to the LLM so it always has full context
+of both sides of the build session.
+
+```json
+{
+  "workshop": {
+    "user_deck": [
+      { "name": "Sol Ring", "count": 1 }
+    ],
+    "user_referenced": [
+      { "name": "Lightning Bolt", "count": 1 }
+    ],
+    "llm_deck": [
+      { "name": "Doubling Season", "count": 1 }
+    ],
+    "llm_referenced": [
+      { "name": "Arcane Signet", "count": 1 }
+    ],
+    "llm_notes": "Building toward a proliferate/counters theme. Win condition is Atraxa ticking up planeswalkers."
+  }
+}
+```
+
+**Ownership model:**
+- The app owns and updates `user_deck` and `user_referenced` based on user
+  actions in the UI
+- The LLM owns and updates `llm_deck`, `llm_referenced`, and `llm_notes` in
+  each response
+- The complete document is injected as context on every turn - both sides
+  always see the full current state
+- The LLM's JSON output is parsed by MCPOrchestrator before reaching the
+  renderer; the structured data routes to the Workshop panel, the readable
+  response text routes to the chat
+
+The JSON schema is included in the Workshop system prompt as a spec. The LLM
+is instructed to always output its updated state block alongside its response.
+This approach is provider-agnostic - any LLM that can follow output format
+instructions can participate.
+
+### Format and Rules
+
+- User selects a format at the start of each Workshop session (e.g. Standard,
+  Commander, Historic, Brawl)
+- Selected format is injected into the Workshop system prompt and held for the
+  session; user can change it mid-session
+- The Workshop system prompt includes comprehensive format rules sourced from
+  the knowledge base: deck size limits, singleton rules, commander color
+  identity, ban lists, restricted lists, and legality rules per format
+- The LLM operates as a deckbuilding expert that knows and enforces format
+  rules. It must never suggest illegal cards, incorrect quantities, or decks
+  that violate format constraints. Accuracy here is non-negotiable - incorrect
+  legality information has real consequences for the user.
+
+### Card Routing
+
+- Cards the user mentions in the chat are matched via CatalogService and
+  populate `user_referenced`
+- The LLM populates `llm_referenced` with cards it is currently discussing
+  and `llm_deck` with cards it has committed to its proposed deck
+- The user explicitly moves cards from `user_referenced` into `user_deck`
+  (not automatic)
+
+### User Interactions - Left Panel
+
+- Add a card to *My Deck* from *In Discussion* with a single action
+- Adjust card counts in *My Deck* with +/- controls
+- Remove cards from *My Deck*
+- No cap on deck size (Commander goes to 100, collection use cases may be
+  larger)
+- Hover any card row for image tooltip (REQ-014)
+
+### User Interactions - Right Panel
+
+- View LLM's current deck proposal and referenced cards
+- Copy an individual card from LLM's Deck into My Deck
+- Copy the LLM's entire deck into My Deck (replaces current deck with
+  confirmation)
+- Hover any card row for image tooltip (REQ-014)
+
+### Deck Stats (Phase 3b)
+
+Displayed for the user's committed deck:
+- Total card count
+- Mana curve (bar chart by converted mana cost)
+- Creature vs. non-creature spell breakdown
+- Color distribution and pip count
+- Land ratio
+- Power spike (where the curve peaks)
 
 ### Import / Export
-- The AI can generate MTGA-compatible import strings at any time for the user to copy
-- User can import a deck list from standard text formats (MTGA export, plain text)
-- User can export their deck in MTGA-compatible format
 
-### User's Deck Area
-Tracks the user's active deck project:
-- Card list with individual counts and total deck count
-- Mana curve visualization (bar chart by converted mana cost)
-- Creature vs. non-creature spell breakdown
-- Color distribution / pip count
-- Land ratio
+- Export user's deck as MTGA-compatible plain text deck list (one card per
+  line: `4 Lightning Bolt`)
+- Import a deck list from MTGA plain text format into My Deck
+- LLM can generate and output an MTGA-compatible import string for its deck
+  at any time during conversation
 
-### MTGA Library
-- User can store their personal MTGA card collection (owned cards)
-- Owned cards are indicated in the deck list view
-- Library can be imported via MTGA export
+### Deck Storage (Phase 3b)
 
-### Deck Storage
 - User can save and load named custom decks locally
 - Deck data persists between sessions
 
+### Collection Integration (REQ-015 - separate tab)
+
+Personal card collection management is handled in a dedicated Collection
+Manager tab, not the Workshop. See REQ-015. The Workshop will integrate with
+collection data once REQ-015 is built (e.g. owned card indicators, "suggest
+owned cards only" toggle).
+
 > **Note:** Phase 3 is split into two sub-phases: the conversational and card
-> layer first (3a), then deck management tools (3b). See ROADMAP.md.
+> layer first (3a), then deck management tools including stats and storage (3b).
+> See ROADMAP.md.
 
 ---
 
@@ -242,30 +337,30 @@ The application must support multiple LLM backends, selectable by the user.
 
 ---
 
-## REQ-009: LLM Response Card Matching
+## REQ-009: Bidirectional Card Routing in Workshop
 
-Card name detection runs on LLM responses in the Workshop tab in addition to
-user input. This is where bidirectional card surfacing lives - both sides of
-the split pane are populated from their respective sides of the conversation.
+Both sides of the Workshop conversation surface cards to their respective
+areas. The mechanism differs by side.
 
-### Behavior
-- After the LLM response is received in the Workshop tab, CatalogService runs
-  the same findInMessage() pass against the response text
-- Cards found in the LLM response populate the right (AI) side of the Workshop panel
-- Cards found in the user's message populate the left (user) side of the Workshop panel
-- Cards are tagged by source (user vs. LLM) to drive the split-pane routing
+### User Side
+- CatalogService runs `findInMessage()` against the user's message text
+- Matched cards are added to `user_referenced` in the Workshop state document
+- They appear in the *In Discussion* section of the left player area
+- The user explicitly promotes cards from *In Discussion* to *My Deck*
+
+### LLM Side
+- The LLM self-declares its referenced and committed cards via the Workshop
+  JSON state block returned in each response (see REQ-005 Workshop State)
+- `llm_referenced` populates the *In Discussion* section of the right LLM area
+- `llm_deck` populates the *LLM's Deck* section of the right LLM area
+- CatalogService is **not** run against LLM response text for Workshop - the
+  JSON contract is the authoritative source for LLM-side card routing
 
 ### Scope
-- LLM response card matching applies to the Workshop tab only
+- Bidirectional card routing applies to the Workshop tab only
 - The MTG Wizard tab does not surface cards from LLM responses
 - Card Lookup receives cards only from user-initiated searches or from the
   "Write to Lookup" feed in MTG Wizard (user-mentioned cards only, never LLM output)
-
-### Toggle
-- A **"Match cards in responses"** toggle in Settings (REQ-006) controls this
-  behavior within the Workshop tab; default **on** (Workshop context makes the intent clear)
-- When off, card matching only runs on user input in the Workshop tab
-- Tooltip notes the Scryfall API call implications
 
 ---
 
@@ -413,3 +508,127 @@ LLM system prompt at startup:
 - The LLM may surface suggestions to update the profile during conversation
   (e.g. "Want me to remember that you play Commander?") - but the user
   controls what actually gets saved
+
+---
+
+## REQ-013: Diagnostics Bar
+
+A persistent, real-time status display that keeps the user informed of what
+the application is doing at all times. The user should never be left staring
+at a loading state wondering whether the app is working or has locked up.
+
+### Display
+
+- A single-line bar fixed to the bottom of the app window, visible across
+  all tabs regardless of which tab is active
+- Displays a short, plain-language description of the current operation as
+  it happens (e.g. "Loading card catalog...", "Fetching card data from
+  Scryfall...", "Waiting for LLM response...")
+- Updates in real time on every new event; each new event replaces the
+  previous message
+- After a short idle period with no new events, the message resets to
+  "Ready."
+
+### Toggle
+
+- **On by default**
+- A toggle button lives inside the diagnostics bar itself at the right edge
+- The button displays an eye icon with a label reflecting current state:
+  **"Diagnostics on"** when active, **"Diagnostics off"** when hidden
+- When toggled off, the bar collapses to show only the toggle button (a thin
+  strip) so the toggle is always accessible regardless of state
+- Toggle preference is stored for the session; future Settings integration
+  will make it persistent (REQ-006)
+
+### Events Covered
+
+At minimum, the diagnostics bar must report on:
+
+**Startup**
+- Loading Scryfall card catalog
+- Loading MTG symbol map
+- Loading knowledge base topics
+- LLM provider detection and connection
+
+**MTG Wizard (per message)**
+- Analyzing message intent
+- Fetching card data from Scryfall (when cards are identified)
+- Injecting knowledge base context
+- Waiting for LLM response (including elapsed time)
+
+**Card Lookup**
+- Search in progress
+- Card data fetch
+
+**General**
+- Any error states that would otherwise appear silent to the user
+
+### Architecture
+
+- `StatusService` (main process) - a thin event emitter; any service calls
+  `StatusService.emit(message)` without needing to know about the UI
+- `status-update` IPC push channel (main → renderer, no response)
+- `StatusBarController` (renderer) - subscribes to status events, manages
+  bar display, toggle state, and idle timer
+- `window.mtgHelper.onStatusUpdate(cb)` added to preload.js IPC surface
+
+### Non-goals
+
+- No scrollable history panel in the UI - the log file (`logs/app.log`)
+  already captures the full event history for any user who wants it
+- No per-tab status areas - one global bar covers all tabs
+
+---
+
+## REQ-014: Card Image Tooltip Service
+
+A shared hover tooltip that displays a card's image when the user hovers over
+any card row in the application. Provides a lightweight visual reference
+without requiring a full card detail panel.
+
+### Behavior
+
+- Hovering over a card row displays a floating tooltip containing the card's
+  image
+- Moving off the card row hides the tooltip
+- The tooltip positions itself near the hovered element and clamps to the
+  viewport so it never goes off screen
+- Uses the Scryfall `small` image (`146×204px`) - compact enough for a
+  tooltip, already available in card data
+
+### Scope
+
+Initially used in the Workshop tab card list areas. Designed as shared
+infrastructure so it can be adopted by other views without rework:
+- Card Lookup (future)
+- MTG Wizard chat - bolded card names (future)
+
+### Architecture
+
+- `CardTooltipController` - a single shared controller instantiated once by
+  `AppViewController`
+- A single hidden `<div>` at the document level, absolutely positioned
+- Any card row that opts in adds a `data-card-image` attribute; the controller
+  wires hover listeners
+- No external library dependency - implemented in plain JS (~30 lines)
+
+---
+
+## REQ-015: Collection Manager Tab (placeholder)
+
+A dedicated fourth tab for managing the user's personal MTGA card collection.
+Separated from Workshop to keep deck building focused and collection management
+independent.
+
+### Intent
+
+- Import personal card collection exported from MTGA via a third-party export
+  tool (supports CSV, JSON, and plain text formats)
+- Track owned cards and quantities
+- Provide collection data to the Workshop for owned card indicators and
+  "suggest owned cards only" filtering
+
+### Detailed Requirements
+
+TBD when this tab is scoped for development. The Workshop (REQ-005) will
+integrate with collection data once this feature is built.
