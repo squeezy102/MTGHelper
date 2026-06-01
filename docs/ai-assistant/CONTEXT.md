@@ -8,6 +8,18 @@ Running notes for AI assistant continuity across sessions.
 - **Last commit:** `7ed1952` - "Add Gemini as free cloud fallback; define three-tier LLM provider hierarchy"
 - **Uncommitted changes:** None
 
+## Tab Naming - Docs vs. Code
+
+The product names defined in REQ-003 and used throughout all docs are:
+- **MTG Wizard** (tab 1), **Card Lookup** (tab 2), **Workshop** (tab 3)
+
+The current HTML (`src/index.html`) and all JS code use different names:
+- "Assistant" / `assistant`, "Lookup" / `lookup`, "Deck Builder" / `deckbuilder`
+
+The HTML labels and internal IDs need to be updated to match the product spec. This is a
+pending code change - renaming the tab labels is cosmetic; renaming the internal IDs
+(`data-tab`, `panel-*`, JS references) touches every controller. Do both together.
+
 ## Current App State
 
 Phases 1, 2, and 2b (partial) are complete. No code work was done this session -
@@ -66,9 +78,9 @@ it was entirely design and documentation. The next session begins implementation
 - **GeminiService** - Gemini provider defined in requirements but not yet implemented.
   `LLMProviderFactory` still selects Claude vs. Ollama only.
 
-## Next Session - Implementation Sprint
+## Implementation Sprint - Build Order
 
-Agreed build order for the next session(s):
+Agreed build order. None of the items below are started yet.
 
 1. **CSS variable refactor** - convert all hardcoded values in `main.css` to CSS custom
    properties. Single file change, Ctrl+R to verify. Unblocks all future UI work.
@@ -94,6 +106,10 @@ Agreed build order for the next session(s):
 
 ## Active Work / Known Issues
 
+- **Tab naming mismatch** - HTML uses "Assistant"/"Deck Builder" and internal IDs
+  `assistant`/`deckbuilder`; product spec and all docs use "MTG Wizard"/"Workshop".
+  Labels are cosmetic; renaming internal IDs touches every controller and should be
+  done together as a single change. See "Tab Naming" section above.
 - Slang card names ("bolt", "goyf") won't match the catalog - requires exact or near-exact
   name. Acceptable for now.
 - "Write to Lookup" toggle not persisted between sessions (Phase 4).
@@ -145,7 +161,7 @@ MTGHelper/
     - LookupViewController.js       Wraps CardPanelController; handles search bar and
                                     relayed cards from chat
     - CardPanelController.js        Card tab bar + 3-section display (image, info, meta)
-    - DeckBuilderViewController.js  Placeholder (Workshop tab)
+    - DeckBuilderViewController.js  Placeholder (Workshop tab - pending rename to WorkshopViewController)
   - ipc/
     - IpcHandlerRegistry.js         Registers IPC handlers; receives services via DI
     - WindowManager.js              Creates/tracks pop-out windows; pushes card state on load

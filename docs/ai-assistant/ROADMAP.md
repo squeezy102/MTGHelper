@@ -24,12 +24,13 @@ getting the scaffolding right so everything that follows has a solid home.
 
 Enhance the Card Lookup tab as a standalone manual card reference tool.
 
-- Manual card search (search bar, results list)
-- Full card detail view (image, info, meta - same three sections)
-- 10 card cap with FIFO rotation - oldest card evicted when cap is reached
-- Alternate printings browser (lazy - fetch count on load, full list on demand)
+- [x] Manual card search (search bar, Enter key support, loading state, status messages)
+- [x] Full card detail view (image, info, meta - same three sections)
+- [x] 10 card cap with FIFO rotation - oldest card evicted when cap is reached
+- [ ] Alternate printings browser (lazy - fetch count on load, full list on demand)
+- [ ] Card display layout redesign: split top half (text left / image right), meta bottom
 
-**Requirements covered:** REQ-004 (complete)
+**Requirements covered:** REQ-004 (partial - alternate printings and layout redesign pending)
 
 ---
 
@@ -56,11 +57,11 @@ in verified, source-traceable facts.
 A real-time status display that keeps the user informed across all phases.
 Built as a standalone feature, not tied to a specific phase.
 
-- [x] `StatusService` - main process event emitter; services call `StatusService.emit()`
-- [x] `status-update` IPC push channel (main → renderer)
-- [x] `StatusBarController` - single-line bottom bar, idle timer, toggle state
-- [x] Eye icon toggle: "Diagnostics on" / "Diagnostics off", bar collapses when off
-- [x] Status calls wired into all services: CatalogService, SymbolService,
+- [ ] `StatusService` - main process event emitter; services call `StatusService.emit()`
+- [ ] `status-update` IPC push channel (main → renderer)
+- [ ] `StatusBarController` - single-line bottom bar, idle timer, toggle state
+- [ ] Eye icon toggle: "Diagnostics on" / "Diagnostics off", bar collapses when off
+- [ ] Status calls wired into all services: CatalogService, SymbolService,
   KnowledgeBaseService, LLMProviderFactory, MCPOrchestrator, ScryfallProvider
 - [ ] Persistent toggle preference via Settings (Phase 4)
 
